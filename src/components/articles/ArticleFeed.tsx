@@ -60,14 +60,21 @@ export default function ArticleFeed({
   }, [activeCategory, articles, query]);
 
   const lead = filtered[0];
-  const remaining = filtered.slice(1);
+  const featuredRail = filtered.slice(1, 3);
+  const remaining = filtered.slice(3);
+  const gridArticles = lead ? remaining : filtered;
+  const countLabel =
+    filtered.length === articles.length
+      ? `${articles.length} stories currently published`
+      : `${filtered.length} stories match this view`;
 
   return (
     <section className="feed-section">
       <div className="feed-head">
-        <div>
+        <div className="feed-head-copy">
           <h2>{title}</h2>
           <p>{subtitle}</p>
+          <p className="feed-count">{countLabel}</p>
         </div>
 
         <label className="search-wrap">
@@ -108,10 +115,22 @@ export default function ArticleFeed({
         </div>
       ) : (
         <>
-          {lead && <ArticleCard article={lead} priority />}
+          {lead && (
+            <div className="feed-featured">
+              <ArticleCard article={lead} priority variant="spotlight" />
+
+              {!!featuredRail.length && (
+                <div className="feed-featured-rail">
+                  {featuredRail.map((article) => (
+                    <ArticleCard key={article.id} article={article} variant="compact" />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="feed-grid">
-            {remaining.map((article) => (
+            {gridArticles.map((article) => (
               <ArticleCard key={article.id} article={article} />
             ))}
           </div>

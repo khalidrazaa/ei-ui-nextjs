@@ -6,13 +6,30 @@ import { articlePath, formatDate, formatReadingTime, summarizeText } from "@/lib
 type ArticleCardProps = {
   article: Article;
   priority?: boolean;
+  variant?: "default" | "spotlight" | "compact";
 };
 
-export default function ArticleCard({ article, priority = false }: ArticleCardProps) {
-  const excerpt = summarizeText(article.excerpt || article.meta_description, priority ? 220 : 160);
+export default function ArticleCard({
+  article,
+  priority = false,
+  variant = "default",
+}: ArticleCardProps) {
+  const excerptLimit =
+    variant === "spotlight" ? 240 : variant === "compact" ? 110 : priority ? 220 : 160;
+  const excerpt = summarizeText(article.excerpt || article.meta_description, excerptLimit);
+  const cardClassName = [
+    "article-card",
+    priority ? "article-card-priority" : "",
+    variant === "spotlight" ? "article-card-spotlight" : "",
+    variant === "compact" ? "article-card-compact" : "",
+    "animate-rise",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const visibleTags = variant === "compact" ? 2 : 3;
 
   return (
-    <article className={`article-card ${priority ? "article-card-priority" : ""} animate-rise`}>
+    <article className={cardClassName}>
       <div className="article-card-meta">
         <span className="chip chip-muted">{article.category || "Insight"}</span>
         <span>{formatDate(article.published_at || article.created_at)}</span>
@@ -27,7 +44,7 @@ export default function ArticleCard({ article, priority = false }: ArticleCardPr
 
       <div className="article-card-footer">
         <div className="article-card-tags">
-          {(article.tags || []).slice(0, 3).map((tag) => (
+          {(article.tags || []).slice(0, visibleTags).map((tag) => (
             <span key={`${article.id}-${tag}`} className="chip chip-soft">
               {tag}
             </span>
@@ -35,7 +52,7 @@ export default function ArticleCard({ article, priority = false }: ArticleCardPr
         </div>
 
         <Link className="read-link" href={articlePath(article)}>
-          Read article
+          {variant === "compact" ? "Open story" : "Read article"}
         </Link>
       </div>
     </article>
