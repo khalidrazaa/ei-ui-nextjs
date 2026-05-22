@@ -13,6 +13,11 @@ type ArticlePageProps = {
   params: Promise<{ slug: string }>;
 };
 
+function normalizeLabel(value: string | null | undefined, fallback: string): string {
+  const label = (value || "").trim();
+  return label.length > 0 ? label : fallback;
+}
+
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
@@ -40,75 +45,93 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 
 export default async function ArticleDetailPage({ params }: ArticlePageProps) {
   const { slug } = await params;
-  const article = await getArticleBySlug(slug);
+  const [article, comments, related] = await Promise.all([
+    getArticleBySlug(slug),
+    getCommentsForSlug(slug),
+    getRelatedArticles(slug, 4),
+  ]);
 
   if (!article) {
     notFound();
   }
 
-  const related = await getRelatedArticles(slug, 4);
-  const comments = await getCommentsForSlug(slug);
+  const articleCategory = normalizeLabel(article.category, "Insight");
+  const articleSubcategory = normalizeLabel(article.subcategory, "General");
 
   return (
     <article className="article-page">
-      <Link href="/articles" className="back-link">
-        Back to Articles
-      </Link>
+      <div className="article-reading-column">
+        <Link href="/articles" className="back-link">
+          Back to Articles
+        </Link>
 
-      <header className="article-header">
-        <div className="article-header-meta">
-          <span className="chip chip-muted">{article.category || "Insight"}</span>
-          <span>{formatDate(article.published_at || article.created_at)}</span>
-          <span>{formatReadingTime(article.reading_time)}</span>
-        </div>
+        <header className="article-header">
+          <p className="article-trail">
+            <span>{articleCategory}</span>
+            <span className="article-trail-separator" aria-hidden>
+              {">"}
+            </span>
+            <span>{articleSubcategory}</span>
+          </p>
 
-        <h1>{article.title}</h1>
-        <p>{article.excerpt || article.meta_description}</p>
-      </header>
+          <h1>{article.title}</h1>
+          <p>{article.excerpt || article.meta_description}</p>
 
-      <section className="article-cover">
-        {article.featured_image_url ? (
-          <Image
-            src={article.featured_image_url}
-            alt={article.image_alt_text || article.title}
-            width={1200}
-            height={680}
-            className="article-cover-image"
-            unoptimized
-          />
-        ) : (
-          <div className="article-cover-fallback">
-            <span>{siteConfig.brandName}</span>
-            <strong>{article.category || "Analysis"}</strong>
+          <div className="article-header-meta">
+            <span>{formatDate(article.published_at || article.created_at)}</span>
+            <span className="article-header-dot" aria-hidden>
+              |
+            </span>
+            <span>{formatReadingTime(article.reading_time)}</span>
           </div>
-        )}
-      </section>
+        </header>
 
-      <ArticleBody content={article.content || "Content is coming soon."} />
-
-      <section className="tag-row">
-        {(article.tags || []).map((tag) => (
-          <span key={`${article.id}-${tag}`} className="chip chip-soft">
-            {tag}
-          </span>
-        ))}
-      </section>
-
-      <CommentSection slug={slug} initialComments={comments} />
-
-      {related.length > 0 && (
-        <section className="related-wrap">
-          <h2>Related Reads</h2>
-          <div className="related-list">
-            {related.map((item) => (
-              <Link key={item.id} href={articlePath(item)}>
-                <h3>{item.title}</h3>
-                <p>{item.excerpt}</p>
-              </Link>
-            ))}
-          </div>
+        <section className="article-cover">
+          {article.featured_image_url ? (
+            <Image
+              src={article.featured_image_url}
+              alt={article.image_alt_text || article.title}
+              width={1200}
+              height={680}
+              className="article-cover-image"
+              unoptimized
+            />
+          ) : (
+            <div className="article-cover-fallback">
+              <span>{siteConfig.brandName}</span>
+              <strong>{articleCategory}</strong>
+            </div>
+          )}
         </section>
-      )}
+
+        <ArticleBody content={article.content || "Content is coming soon."} />
+
+        {(article.tags || []).length > 0 && (
+          <section className="tag-row">
+            {(article.tags || []).map((tag) => (
+              <span key={`${article.id}-${tag}`} className="chip chip-soft">
+                {tag}
+              </span>
+            ))}
+          </section>
+        )}
+
+        <CommentSection slug={slug} initialComments={comments} />
+
+        {related.length > 0 && (
+          <section className="related-wrap">
+            <h2>Related Reads</h2>
+            <div className="related-list">
+              {related.map((item) => (
+                <Link key={item.id} href={articlePath(item)}>
+                  <h3>{item.title}</h3>
+                  <p>{item.excerpt}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
     </article>
   );
 }

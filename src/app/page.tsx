@@ -11,8 +11,8 @@ export default async function HomePage() {
       <ArticleFeed
         articles={articles}
         usedFallback={usedFallback}
-        title="Fresh Analysis"
-        subtitle="A mobile-first stream of explainers and trend intelligence."
+        title="Insights and Automation Playbooks"
+        subtitle="Practical breakdowns on data automation, workflow systems, and delivery acceleration."
       />
     </div>
   );
