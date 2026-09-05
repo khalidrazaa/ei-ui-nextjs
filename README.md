@@ -28,3 +28,7 @@ npm run dev
 npx eslint src
 npm run build
 ```
+
+### Backend configuration at runtime
+
+Article requests run when a visitor opens a page, not during image builds. Set `API_URL` (including `/v1`) and `PUBLIC_APP_KEY` on the running container. `API_URL` takes precedence over the legacy `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_API_BASE_URL` aliases. Do not pass the API key as a Docker build argument. Local environment files are excluded from the Docker build context.

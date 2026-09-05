@@ -1,12 +1,18 @@
 import "server-only";
 
-const API_BASE = (
-  process.env.NEXT_PUBLIC_API_URL ||
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  process.env.API_URL ||
-  ""
-).replace(/\/$/, "");
-const PUBLIC_APP_KEY = (process.env.PUBLIC_APP_KEY || "").trim();
+import { connection } from "next/server";
+
+function getApiConfig() {
+  return {
+    base: (
+      process.env.API_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      ""
+    ).trim().replace(/\/$/, ""),
+    key: (process.env.PUBLIC_APP_KEY || "").trim(),
+  };
+}
 
 type ApiFetchOptions = RequestInit & {
   next?: {
@@ -26,7 +32,8 @@ export class ApiError extends Error {
 }
 
 export function isPublicApiConfigured(): boolean {
-  return Boolean(API_BASE && PUBLIC_APP_KEY);
+  const { base, key } = getApiConfig();
+  return Boolean(base && key);
 }
 
 function joinEndpoint(endpoint: string): string {
@@ -40,6 +47,10 @@ export async function fetchPublicApi<T>(
   endpoint: string,
   options: ApiFetchOptions = {}
 ): Promise<T> {
+  // Runtime configuration is required only when a request arrives, never during builds.
+  await connection();
+  const { base: API_BASE, key: PUBLIC_APP_KEY } = getApiConfig();
+
   if (!API_BASE) {
     throw new ApiError(
       "NEXT_PUBLIC_API_URL (or NEXT_PUBLIC_API_BASE_URL) or API_URL is missing.",
