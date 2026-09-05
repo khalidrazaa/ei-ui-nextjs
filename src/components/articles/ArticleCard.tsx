@@ -31,7 +31,7 @@ export default function ArticleCard({
   return (
     <article className={cardClassName}>
       <div className="article-card-meta">
-        <span className="chip chip-muted">{article.category || "Insight"}</span>
+        {article.category && <span className="chip chip-muted">{article.category}</span>}
         <span>{formatDate(article.published_at || article.created_at)}</span>
         <span>{formatReadingTime(article.reading_time)}</span>
       </div>
@@ -40,7 +40,7 @@ export default function ArticleCard({
         <Link href={articlePath(article)}>{article.title}</Link>
       </h3>
 
-      <p className="article-card-excerpt">{excerpt}</p>
+      {excerpt && <p className="article-card-excerpt">{excerpt}</p>}
 
       <div className="article-card-footer">
         <div className="article-card-tags">

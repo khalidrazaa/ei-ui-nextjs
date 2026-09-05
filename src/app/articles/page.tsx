@@ -10,16 +10,15 @@ export const metadata: Metadata = {
 };
 
 export default async function ArticlesPage() {
-  const { articles, usedFallback } = await getPublishedArticles(200);
+  const { articles } = await getPublishedArticles(200);
 
   return (
     <div className="page-stack">
       <section className="section-intro">
-        <p>Published from host: {siteConfig.hostSite}</p>
         <h1>All Published Articles</h1>
       </section>
 
-      <ArticleLibrary articles={articles} usedFallback={usedFallback} />
+      <ArticleLibrary articles={articles} />
     </div>
   );
 }

@@ -13,11 +13,6 @@ type ArticlePageProps = {
   params: Promise<{ slug: string }>;
 };
 
-function normalizeLabel(value: string | null | undefined, fallback: string): string {
-  const label = (value || "").trim();
-  return label.length > 0 ? label : fallback;
-}
-
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
@@ -45,19 +40,12 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 
 export default async function ArticleDetailPage({ params }: ArticlePageProps) {
   const { slug } = await params;
-  const [article, comments, related] = await Promise.all([
-    getArticleBySlug(slug),
+  const article = await getArticleBySlug(slug);
+  if (!article) notFound();
+  const [comments, related] = await Promise.all([
     getCommentsForSlug(slug),
     getRelatedArticles(slug, 4),
   ]);
-
-  if (!article) {
-    notFound();
-  }
-
-  const articleCategory = normalizeLabel(article.category, "Insight");
-  const articleSubcategory = normalizeLabel(article.subcategory, "General");
-
   return (
     <article className="article-page">
       <div className="article-reading-column">
@@ -66,28 +54,24 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
         </Link>
 
         <header className="article-header">
-          <p className="article-trail">
-            <span>{articleCategory}</span>
-            <span className="article-trail-separator" aria-hidden>
-              {">"}
-            </span>
-            <span>{articleSubcategory}</span>
-          </p>
+          {(article.category || article.subcategory) && (
+            <p className="article-trail">
+              {[article.category, article.subcategory].filter(Boolean).join(" > ")}
+            </p>
+          )}
 
           <h1>{article.title}</h1>
           <p>{article.excerpt || article.meta_description}</p>
 
           <div className="article-header-meta">
             <span>{formatDate(article.published_at || article.created_at)}</span>
-            <span className="article-header-dot" aria-hidden>
-              |
-            </span>
+            {article.reading_time && (article.published_at || article.created_at) ? <span aria-hidden>|</span> : null}
             <span>{formatReadingTime(article.reading_time)}</span>
           </div>
         </header>
 
-        <section className="article-cover">
-          {article.featured_image_url ? (
+        {article.featured_image_url && (
+          <section className="article-cover">
             <Image
               src={article.featured_image_url}
               alt={article.image_alt_text || article.title}
@@ -96,15 +80,10 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
               className="article-cover-image"
               unoptimized
             />
-          ) : (
-            <div className="article-cover-fallback">
-              <span>{siteConfig.brandName}</span>
-              <strong>{articleCategory}</strong>
-            </div>
-          )}
-        </section>
+          </section>
+        )}
 
-        <ArticleBody content={article.content || "Content is coming soon."} />
+        {article.content && <ArticleBody content={article.content} />}
 
         {(article.tags || []).length > 0 && (
           <section className="tag-row">

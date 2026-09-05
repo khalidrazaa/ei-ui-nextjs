@@ -2,12 +2,12 @@ import { Article } from "@/types/article";
 
 export function formatDate(value?: string | null): string {
   if (!value) {
-    return "Recently";
+    return "";
   }
 
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return "Recently";
+    return "";
   }
 
   return new Intl.DateTimeFormat("en-US", {
@@ -19,7 +19,7 @@ export function formatDate(value?: string | null): string {
 
 export function formatReadingTime(minutes?: number | null): string {
   if (!minutes || minutes < 1) {
-    return "3 min read";
+    return "";
   }
   return `${minutes} min read`;
 }
@@ -31,7 +31,7 @@ export function articlePath(article: Pick<Article, "slug">): string {
 export function summarizeText(value?: string | null, maxLength = 190): string {
   const text = (value || "").replace(/\s+/g, " ").trim();
   if (!text) {
-    return "More details coming soon.";
+    return "";
   }
   if (text.length <= maxLength) {
     return text;

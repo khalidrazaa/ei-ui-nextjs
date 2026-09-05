@@ -8,7 +8,6 @@ export type SiteConfig = {
   heroHighlight: string;
   aboutSummary: string;
   navItems: Array<{ href: string; label: string }>;
-  contentPillars: string[];
 };
 
 export const siteConfig: SiteConfig = {
@@ -27,5 +26,4 @@ export const siteConfig: SiteConfig = {
     { href: "/articles", label: "Articles" },
     { href: "/about", label: "About" },
   ],
-  contentPillars: ["AI", "Product", "Startups", "Developer Tools", "Future of Work"],
 };

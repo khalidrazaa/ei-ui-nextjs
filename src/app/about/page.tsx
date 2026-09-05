@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { getPublishedArticles } from "@/lib/articles";
 import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
@@ -7,7 +8,10 @@ export const metadata: Metadata = {
   description: `About ${siteConfig.brandName}`,
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const { articles } = await getPublishedArticles(500);
+  const categories = Array.from(new Set(articles.map((article) => article.category).filter(Boolean)));
+
   return (
     <section className="about-wrap">
       <p className="about-kicker">About {siteConfig.brandName}</p>
@@ -18,7 +22,7 @@ export default function AboutPage() {
         <article>
           <h2>What we publish</h2>
           <ul>
-            {siteConfig.contentPillars.map((pillar) => (
+            {categories.map((pillar) => (
               <li key={pillar}>{pillar}</li>
             ))}
           </ul>
@@ -27,9 +31,8 @@ export default function AboutPage() {
         <article>
           <h2>How we write</h2>
           <p>
-            We combine trend intelligence from the FastAPI backend with clear narrative formatting. Every story is designed for scrolling and reading on phones first.
+            Browse published articles from the home page or explore the article library by topic.
           </p>
-          <p>Host site for this app: {siteConfig.hostSite}</p>
         </article>
       </div>
     </section>

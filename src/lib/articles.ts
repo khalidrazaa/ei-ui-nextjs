@@ -3,12 +3,10 @@ import "server-only";
 import { siteConfig } from "@/config/site";
 import { Article, ArticleComment } from "@/types/article";
 
-import { fetchPublicApi, isPublicApiConfigured } from "@/lib/public-api";
-import { fallbackArticles } from "@/lib/fallback-articles";
+import { ApiError, fetchPublicApi } from "@/lib/public-api";
 
 export type PublishedArticleResult = {
   articles: Article[];
-  usedFallback: boolean;
 };
 
 function normalizeHost(value?: string | null): string {
@@ -27,15 +25,14 @@ function toArray(value: unknown): string[] {
 }
 
 function normalizeArticle(article: Article): Article {
-  const createdAt = article.created_at || article.published_at || new Date().toISOString();
+  const createdAt = article.created_at || article.published_at || null;
 
   return {
     ...article,
     created_at: createdAt,
     tags: toArray(article.tags),
     keywords: toArray(article.keywords),
-    status: article.status || "published",
-    excerpt: article.excerpt || "No summary available yet.",
+    excerpt: article.excerpt || "",
     content: article.content || "",
     host_site: normalizeHost(article.host_site || siteConfig.hostSite),
     reading_time: typeof article.reading_time === "number" ? article.reading_time : null,
@@ -53,59 +50,28 @@ function sortNewestFirst(articles: Article[]): Article[] {
 export async function getPublishedArticles(limit = 120): Promise<PublishedArticleResult> {
   const hostSite = normalizeHost(siteConfig.hostSite);
 
-  if (!isPublicApiConfigured()) {
-    return {
-      articles: sortNewestFirst(fallbackArticles),
-      usedFallback: true,
-    };
+  const endpoint = "/public/articles?host_site=" + encodeURIComponent(hostSite) + "&limit=" + limit;
+  const response = await fetchPublicApi<Article[]>(endpoint, { cache: "no-store" });
+  if (!Array.isArray(response)) {
+    throw new Error("Invalid article list response.");
   }
-
-  try {
-    const endpoint = `/public/articles?host_site=${encodeURIComponent(hostSite)}&limit=${limit}`;
-    const response = await fetchPublicApi<Article[]>(endpoint, {
-      next: { revalidate: 90 },
-      cache: "no-store",
-    });
-
-    const normalized = sortNewestFirst(response.map(normalizeArticle)).filter(
+  return {
+    articles: sortNewestFirst(response.map(normalizeArticle)).filter(
       (article) => normalizeHost(article.host_site) === hostSite
-    );
-
-    if (normalized.length === 0) {
-      return {
-        articles: sortNewestFirst(fallbackArticles),
-        usedFallback: true,
-      };
-    }
-
-    return {
-      articles: normalized,
-      usedFallback: false,
-    };
-  } catch {
-    return {
-      articles: sortNewestFirst(fallbackArticles),
-      usedFallback: true,
-    };
-  }
+    ),
+  };
 }
 
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
   const hostSite = normalizeHost(siteConfig.hostSite);
-
-  if (!isPublicApiConfigured()) {
-    return fallbackArticles.find((article) => article.slug === slug) || null;
-  }
-
   try {
-    const endpoint = `/public/articles/${encodeURIComponent(slug)}?host_site=${encodeURIComponent(hostSite)}`;
-    const article = await fetchPublicApi<Article>(endpoint, {
-      next: { revalidate: 60 },
-      cache: "no-store",
-    });
-    return normalizeArticle(article);
-  } catch {
-    return fallbackArticles.find((article) => article.slug === slug) || null;
+    const endpoint = "/public/articles/" + encodeURIComponent(slug) + "?host_site=" + encodeURIComponent(hostSite);
+    const article = await fetchPublicApi<Article>(endpoint, { cache: "no-store" });
+    const normalized = normalizeArticle(article);
+    return normalized.host_site === hostSite ? normalized : null;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
   }
 }
 
@@ -117,18 +83,8 @@ export async function getRelatedArticles(slug: string, limit = 4): Promise<Artic
 export async function getCommentsForSlug(slug: string): Promise<ArticleComment[]> {
   const hostSite = normalizeHost(siteConfig.hostSite);
 
-  if (!isPublicApiConfigured()) {
-    return [];
-  }
-
-  try {
-    const endpoint = `/public/articles/${encodeURIComponent(slug)}/comments?host_site=${encodeURIComponent(hostSite)}&limit=200`;
-    return await fetchPublicApi<ArticleComment[]>(endpoint, {
-      cache: "no-store",
-    });
-  } catch {
-    return [];
-  }
+  const endpoint = "/public/articles/" + encodeURIComponent(slug) + "/comments?host_site=" + encodeURIComponent(hostSite) + "&limit=200";
+  return fetchPublicApi<ArticleComment[]>(endpoint, { cache: "no-store" });
 }
 
 export async function createCommentForSlug(

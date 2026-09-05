@@ -3,20 +3,17 @@
 import { useMemo, useState } from "react";
 
 import { Article } from "@/types/article";
-import { siteConfig } from "@/config/site";
 
 import ArticleCard from "@/components/articles/ArticleCard";
 
 type ArticleFeedProps = {
   articles: Article[];
-  usedFallback?: boolean;
   title?: string;
   subtitle?: string;
 };
 
 export default function ArticleFeed({
   articles,
-  usedFallback = false,
   title = "Latest Stories",
   subtitle = "Swipe-friendly deep reads designed for phones and tablets.",
 }: ArticleFeedProps) {
@@ -29,8 +26,7 @@ export default function ArticleFeed({
       .filter((value): value is string => Boolean(value && value.trim()))
       .map((value) => value.trim());
 
-    const merged = [...siteConfig.contentPillars, ...pool];
-    return ["All", ...Array.from(new Set(merged))];
+    return ["All", ...Array.from(new Set(pool))];
   }, [articles]);
 
   const filtered = useMemo(() => {
@@ -102,16 +98,12 @@ export default function ArticleFeed({
         ))}
       </div>
 
-      {usedFallback && (
-        <p className="status-note">
-          Live API data is unavailable right now, so sample published stories are shown for preview.
-        </p>
-      )}
+
 
       {!filtered.length ? (
         <div className="empty-state">
-          <h3>No articles match this filter</h3>
-          <p>Try another keyword or switch category.</p>
+          <h3>{articles.length ? "No articles match this filter" : "No articles published yet"}</h3>
+          {articles.length > 0 && <p>Try another keyword or switch category.</p>}
         </div>
       ) : (
         <>

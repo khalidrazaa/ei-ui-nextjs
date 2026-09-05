@@ -8,7 +8,6 @@ import { Article } from "@/types/article";
 
 type ArticleLibraryProps = {
   articles: Article[];
-  usedFallback?: boolean;
 };
 
 type ArticleIndexItem = Pick<Article, "id" | "slug" | "title" | "published_at" | "created_at" | "category" | "subcategory">;
@@ -84,7 +83,7 @@ function buildArticleIndex(articles: Article[]): ArticleIndexGroup[] {
     }));
 }
 
-export default function ArticleLibrary({ articles, usedFallback = false }: ArticleLibraryProps) {
+export default function ArticleLibrary({ articles }: ArticleLibraryProps) {
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
@@ -241,16 +240,12 @@ export default function ArticleLibrary({ articles, usedFallback = false }: Artic
           </label>
         </div>
 
-        {usedFallback && (
-          <p className="status-note">
-            Live API data is unavailable right now, so sample published stories are shown for preview.
-          </p>
-        )}
+
 
         {!filteredArticles.length ? (
           <div className="empty-state">
-            <h3>No titles match this view</h3>
-            <p>Try another search or select a different category.</p>
+            <h3>{articles.length ? "No titles match this view" : "No articles published yet"}</h3>
+            {articles.length > 0 && <p>Try another search or select a different category.</p>}
           </div>
         ) : (
           <div className="article-title-list">
