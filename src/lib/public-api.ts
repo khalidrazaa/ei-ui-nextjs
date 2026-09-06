@@ -2,6 +2,9 @@ import "server-only";
 
 import { connection } from "next/server";
 
+
+// const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+
 function getApiConfig() {
   return {
     base: (
