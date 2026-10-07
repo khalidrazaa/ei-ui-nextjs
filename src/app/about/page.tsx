@@ -1,40 +1,52 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
-import { getPublishedArticles } from "@/lib/articles";
 import { siteConfig } from "@/config/site";
+
+import styles from "../info-pages.module.css";
 
 export const metadata: Metadata = {
   title: "About",
-  description: `About ${siteConfig.brandName}`,
+  description: `${siteConfig.brandName} makes data, analytics and technology easier to understand.`,
+  alternates: { canonical: "/about" },
 };
 
-export default async function AboutPage() {
-  const { articles } = await getPublishedArticles(500);
-  const categories = Array.from(new Set(articles.map((article) => article.category).filter(Boolean)));
-
+export default function AboutPage() {
   return (
-    <section className="about-wrap">
-      <p className="about-kicker">About {siteConfig.brandName}</p>
-      <h1>Readable writing for fast-moving technology.</h1>
-      <p>{siteConfig.aboutSummary}</p>
+    <div className={styles.page}>
+      <section className={`${styles.panel} ${styles.aboutCard}`} aria-labelledby="about-title">
+        <h1 id="about-title" className={styles.title}>About {siteConfig.brandName}</h1>
+        <p className={styles.lead}>
+          <strong>{siteConfig.brandName} makes data, analytics and technology easier to understand.</strong>
+        </p>
+        <p className={styles.copy}>
+          We focus on practical explanations, real-world use cases, architecture,
+          automation, tools and cost considerations — without unnecessary jargon.
+        </p>
+        <p className={styles.copy}>
+          Topics include data platforms, BigQuery, Power BI, Microsoft Fabric,
+          APIs, reporting, dashboards and workflow automation.
+        </p>
 
-      <div className="about-grid">
-        <article>
-          <h2>What we publish</h2>
-          <ul>
-            {categories.map((pillar) => (
-              <li key={pillar}>{pillar}</li>
-            ))}
-          </ul>
-        </article>
-
-        <article>
-          <h2>How we write</h2>
-          <p>
-            Browse published articles from the home page or explore the article library by topic.
+        <section className={styles.aboutSection} aria-labelledby="behind-title">
+          <h2 id="behind-title" className={styles.subtitle}>Behind {siteConfig.brandName}</h2>
+          <p className={styles.copy}>
+            I&apos;m Khalid Raza, a technology professional working across data,
+            analytics, software and automation.
           </p>
-        </article>
-      </div>
-    </section>
+          <p className={styles.copy}>
+            {siteConfig.brandName} is where I share practical ideas, solution patterns and
+            lessons from working with technology in real-world environments.
+          </p>
+        </section>
+
+        <div className={styles.aboutContact}>
+          <p className={styles.contactPrompt}><strong>Have a question or an idea?</strong></p>
+          <Link href="/contact" className={styles.textLink}>
+            Get in touch <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+      </section>
+    </div>
   );
 }

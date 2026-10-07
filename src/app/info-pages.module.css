@@ -1,0 +1,332 @@
+.page {
+  width: min(960px, 100%);
+  margin-inline: auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.panel {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  background: var(--panel);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: clamp(1.45rem, 4.4vw, 2.1rem);
+  line-height: 1.2;
+}
+
+.lead {
+  max-width: 62ch;
+  margin: 0.85rem 0 0;
+  font-family: var(--font-ui);
+  font-size: clamp(1.05rem, 2.5vw, 1.18rem);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.copy {
+  max-width: 75ch;
+  margin: 0.65rem 0 0;
+  color: var(--muted);
+}
+
+.aboutCard {
+  width: min(820px, 100%);
+  margin-inline: auto;
+}
+
+.aboutSection,
+.aboutContact {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+}
+
+.subtitle {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.contactPrompt {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+}
+
+.textLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  color: var(--accent);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.textLink:hover,
+.email:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.textLink:focus-visible,
+.email:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+
+.aboutCard,
+.contactCard {
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  box-shadow: 0 14px 30px rgba(25, 40, 64, 0.08);
+}
+
+.contactBody {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+}
+
+.contactLabel {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.contactBody .form {
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+}
+
+.email {
+  display: inline-block;
+  margin-top: 0.4rem;
+  color: var(--accent);
+  font-family: var(--font-ui);
+  font-size: clamp(1rem, 2.6vw, 1.18rem);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.enquiries {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.7rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+}
+
+.enquiries li::marker {
+  color: var(--accent);
+}
+
+.form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.formRow {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.field span {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.6rem 0.75rem;
+  background: var(--panel-strong);
+  color: var(--ink);
+  font: inherit;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 7rem;
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, white 55%);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.phoneRow {
+  display: grid;
+  grid-template-columns: minmax(0, 6.5rem) minmax(0, 1fr);
+  gap: 0.55rem;
+  align-items: start;
+}
+
+.countryCodeControl {
+  position: relative;
+  min-width: 0;
+}
+
+.field .countryCodeInput {
+  padding-right: 2.25rem;
+}
+
+.countryCodeToggle {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.countryCodeToggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -3px;
+}
+
+.countryCodeToggle:disabled {
+  opacity: 0.58;
+  cursor: wait;
+}
+
+.countryCodeToggle[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.countryCodeList {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  z-index: 30;
+  width: min(17rem, calc(100vw - 4rem));
+  max-height: 15rem;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.3rem;
+  background: color-mix(in srgb, white 92%, var(--accent-soft) 8%);
+  box-shadow: 0 10px 28px rgba(25, 40, 64, 0.14);
+}
+
+.countryCodeOption {
+  display: grid;
+  grid-template-columns: 3.25rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  min-height: 2.5rem;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.countryCodeOption:hover,
+.countryCodeOption[data-active="true"] {
+  background: var(--accent-soft);
+}
+
+.countryCodeOption[aria-selected="true"] {
+  color: var(--accent);
+}
+
+.countryCodeOption:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.countryCodeValue {
+  font-weight: 600;
+}
+
+.fieldHint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.formNote {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.formError {
+  color: #a51212;
+}
+
+.formSuccess {
+  color: var(--accent);
+}
+
+.sendButton {
+  justify-self: start;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+  background: var(--accent);
+  color: white;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.sendButton:disabled {
+  opacity: 0.58;
+  cursor: wait;
+}
+
+@media (min-width: 768px) {
+  .contactBody {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 1.5rem;
+  }
+
+  .contactBody .form {
+    border-top: 0;
+    border-left: 1px solid var(--border);
+    padding-top: 0;
+    padding-left: 1.5rem;
+  }
+
+  .formRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

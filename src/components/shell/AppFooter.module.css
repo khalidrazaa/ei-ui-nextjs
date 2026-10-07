@@ -1,0 +1,62 @@
+.footer {
+  flex-shrink: 0;
+  /* Keep footer links above the fixed mobile dock without leaving a gap below the footer. */
+  padding-bottom: 86px;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem 1.25rem;
+  padding-block: 0.55rem;
+}
+
+.copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.75rem;
+  margin: 0;
+}
+
+.copy strong {
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.8rem;
+}
+
+.links a {
+  padding: 0.25rem 0.15rem;
+  border-radius: 4px;
+}
+
+.links a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.links a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (min-width: 768px) {
+  .footer {
+    padding-bottom: 0;
+  }
+}

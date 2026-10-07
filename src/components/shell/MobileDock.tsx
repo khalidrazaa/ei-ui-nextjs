@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpenText, House, Info } from "lucide-react";
+import { BookOpenText, House, Info, Mail } from "lucide-react";
 
 const items = [
   { href: "/", label: "Home", icon: House },
   { href: "/articles", label: "Articles", icon: BookOpenText },
   { href: "/about", label: "About", icon: Info },
+  { href: "/contact", label: "Contact", icon: Mail },
 ];
 
 export default function MobileDock() {
