@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import AppFooter from "@/components/shell/AppFooter";
 import AppHeader from "@/components/shell/AppHeader";
 import MobileDock from "@/components/shell/MobileDock";
 import { siteConfig } from "@/config/site";
@@ -25,11 +26,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      <body className="app-body">
         <div className="bg-orb bg-orb-one" aria-hidden />
         <div className="bg-orb bg-orb-two" aria-hidden />
         <AppHeader />
         <main className="app-shell app-main">{children}</main>
+        <AppFooter />
         <MobileDock />
       </body>
     </html>
