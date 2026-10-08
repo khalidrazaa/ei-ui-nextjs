@@ -123,6 +123,41 @@ test("forwards a normalized phone number including its country code", async () =
   assert.deepEqual(requests[0].body, { ...validMessage, phone: "+919876543210" });
 });
 
+test("validates national numbers against different selected country codes", async () => {
+  for (const [country_code, phone, normalized] of [
+    ["+91", "9876543210", "+919876543210"],
+    ["+1", "2025550198", "+12025550198"],
+    ["+1", "6045550123", "+16045550123"],
+    ["+44", "02079460018", "+442079460018"],
+    ["+971", "0501234567", "+971501234567"],
+    ["+61", "0412345678", "+61412345678"],
+    ["+65", "81234567", "+6581234567"],
+    ["+49", "030123456", "+4930123456"],
+    ["+33", "0123456789", "+33123456789"],
+    ["+966", "0512345678", "+966512345678"],
+    ["+27", "0821234567", "+27821234567"],
+    ["+39", "0612345678", "+390612345678"],
+    ["+1", "+12025550198", "+12025550198"],
+  ]) {
+    assert.equal((await post({ ...validMessage, country_code, phone })).status, 200);
+    assert.deepEqual(requests.at(-1).body, { ...validMessage, phone: normalized });
+  }
+});
+
+test("rejects invalid country rules and country-code mismatches before forwarding", async () => {
+  for (const [country_code, phone] of [
+    ["+91", "987654321"], ["+91", "98765432100"], ["+91", "0000000000"],
+    ["+1", "1234567890"], ["+1", "202555019"], ["+65", "8123456789"],
+    ["+971", "123456789"], ["+999", "9876543210"], ["India", "9876543210"],
+    ["+91", "+12025550198"], ["+1", "+919876543210"],
+    ["+91", "98765abc10"], ["+91", "9876543210 ext 1"],
+    [91, "+919876543210"], [null, "+919876543210"],
+  ]) {
+    assert.equal((await post({ ...validMessage, country_code, phone })).status, 422);
+  }
+  assert.equal(requests.length, 0);
+});
+
 test("keeps the phone field optional", async () => {
   for (const phone of [null, "", "   "]) {
     assert.equal((await post({ ...validMessage, phone })).status, 200);
@@ -135,6 +170,7 @@ test("rejects malformed international phone numbers before contacting the backen
     919876543210, {}, "9876543210", "+01234567", "+123456", "+1234567890123456",
     "+91 98765 ext123", "+91+9876543210", "+91\n9876543210", "\n+919876543210", "\t",
     "(+1)2025550198", "--+12025550198",
+    "+999123456789", "+11234567890", "+91987654321", "+9198765432100",
     "+١٢٣٤٥٦٧٨٩", "+" + " ".repeat(40),
   ]) {
     assert.equal((await post({ ...validMessage, phone })).status, 422);
@@ -197,6 +233,8 @@ test("production Contact page exposes the form without the backend key", async (
   assert.ok(html.includes('id="contact-country-code"'));
   assert.ok(html.includes('role="combobox"'));
   assert.ok(html.includes('aria-expanded="false"'));
+  assert.ok(html.includes('inputMode="numeric"'));
+  assert.ok(html.includes('pattern="[0-9]*"'));
   assert.ok(html.includes("Send Message"));
   assert.equal(html.includes("This form is currently unavailable"), false);
   assert.equal(html.includes("contact-test-key"), false);

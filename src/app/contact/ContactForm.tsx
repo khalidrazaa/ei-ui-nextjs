@@ -1,8 +1,8 @@
 "use client";
 
-import { type FormEvent, useRef, useState } from "react";
+import { type ClipboardEvent, type FormEvent, useRef, useState } from "react";
 
-import { combineContactPhone } from "@/lib/contact-phone";
+import { combineContactPhone, contactPhoneInputDigits } from "@/lib/contact-phone";
 
 import styles from "../info-pages.module.css";
 import CountryCodeInput from "./CountryCodeInput";
@@ -10,8 +10,40 @@ import CountryCodeInput from "./CountryCodeInput";
 export default function ContactForm() {
   const submitting = useRef(false);
   const [countryCode, setCountryCode] = useState("+91");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [phoneTouched, setPhoneTouched] = useState(false);
+  const phoneRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
+
+  function validatePhone(number: string, code: string = countryCode): string | null {
+    try {
+      combineContactPhone(code, number);
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : "Please check your phone number.";
+    }
+  }
+
+  function onPhonePaste(event: ClipboardEvent<HTMLInputElement>) {
+    event.preventDefault();
+    try {
+      const pasted = event.clipboardData.getData("text");
+      const digits = contactPhoneInputDigits(countryCode, pasted);
+      const start = event.currentTarget.selectionStart ?? 0;
+      const end = event.currentTarget.selectionEnd ?? phoneNumber.length;
+      const next = pasted.trim().startsWith("+")
+        ? digits
+        : phoneNumber.slice(0, start) + digits + phoneNumber.slice(end);
+      if (next.length > 15) throw new Error("Please check the length of your phone number.");
+      setPhoneNumber(next);
+      setPhoneError(phoneTouched ? validatePhone(next) : null);
+      setFeedback(null);
+    } catch (error) {
+      setPhoneError(error instanceof Error ? error.message : "Use digits only for the phone number.");
+    }
+  }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -26,12 +58,15 @@ export default function ContactForm() {
     try {
       phone = combineContactPhone(
         countryCode,
-        String(values.get("phone") || "")
+        phoneNumber
       );
     } catch (error) {
-      setFeedback({ kind: "error", message: error instanceof Error ? error.message : "Please check your phone number." });
+      setPhoneError(error instanceof Error ? error.message : "Please check your phone number.");
+      setPhoneTouched(true);
+      phoneRef.current?.focus();
       return;
     }
+    setPhoneError(null);
     if (!name || !email || !message) {
       setFeedback({ kind: "error", message: "Please enter your name, email and message." });
       return;
@@ -44,7 +79,7 @@ export default function ContactForm() {
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, message, ...(phone ? { phone } : {}) }),
+        body: JSON.stringify({ name, email, message, ...(phone ? { phone, country_code: countryCode } : {}) }),
         signal: AbortSignal.timeout(25_000),
       });
       const data: unknown = await response.json().catch(() => null);
@@ -56,6 +91,9 @@ export default function ContactForm() {
       }
       form.reset();
       setCountryCode("+91");
+      setPhoneNumber("");
+      setPhoneError(null);
+      setPhoneTouched(false);
       setFeedback({ kind: "success", message: "Your message has been submitted. Thank you for getting in touch." });
     } catch (error) {
       setFeedback({
@@ -95,26 +133,54 @@ export default function ContactForm() {
           <CountryCodeInput
             value={countryCode}
             onChange={(value) => {
+              if (!/^\+?[0-9]{0,3}$/.test(value)) {
+                setPhoneError("Use + followed by digits for the country code.");
+                return;
+              }
               setCountryCode(value);
+              setPhoneError(phoneTouched ? validatePhone(phoneNumber, value) : null);
               setFeedback(null);
             }}
             disabled={isSubmitting}
           />
           <input
+            ref={phoneRef}
             id="contact-phone"
             name="phone"
             type="tel"
-            inputMode="tel"
+            inputMode="numeric"
             autoComplete="tel-national"
             placeholder="Phone number"
-            maxLength={40}
-            aria-describedby="contact-phone-hint"
+            pattern="[0-9]*"
+            maxLength={15}
+            value={phoneNumber}
+            onChange={(event) => {
+              const next = event.target.value;
+              if (!/^[0-9]*$/.test(next)) {
+                setPhoneError("Use digits only for the phone number.");
+                return;
+              }
+              setPhoneNumber(next);
+              setPhoneError(phoneTouched ? validatePhone(next) : null);
+            }}
+            onPaste={onPhonePaste}
+            onBlur={() => {
+              setPhoneTouched(true);
+              setPhoneError(validatePhone(phoneNumber));
+            }}
+            aria-invalid={Boolean(phoneError)}
+            aria-describedby={`contact-phone-hint${phoneError ? " contact-phone-error" : ""}`}
             disabled={isSubmitting}
           />
         </div>
         <p id="contact-phone-hint" className={styles.fieldHint}>
-          You can also paste a full number beginning with +.
+          Enter the number for the selected country code.
         </p>
+        {phoneError && (
+          <p id="contact-phone-error" className={`${styles.formNote} ${styles.formError}`} role="alert">
+            {phoneError}
+          </p>
+        )}
       </div>
       <label className={styles.field} htmlFor="contact-message">
         <span>Message</span>

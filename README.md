@@ -44,10 +44,15 @@ through its configured email provider, using the visitor's email as Reply-To.
 The form shows success only after the backend confirms email-provider acceptance.
 Failures retain the entered fields and show a retry or direct-email message.
 
-Phone is optional. Edit the country code directly (default India, +91), choose a
-code from its dropdown, or paste a full number starting with +. Phone values are
-normalized to + followed by 7–15 digits and included in the contact email when
-provided; this checks formatting, not whether a number is assigned.
+Phone is optional. Edit the country code directly (default India, +91) or choose
+one from its dropdown. The phone input stores national digits only. Formatted
+pastes are normalized; a full international paste must match the selected code.
+`libphonenumber-js/max` checks country-specific lengths and number prefixes in
+the browser and Next.js route; the backend repeats validation with `phonenumbers`.
+National trunk prefixes are handled by the library, preserving significant zeros.
+Valid values are sent as E.164 and included in the contact email. This validates
+numbering rules, not ownership or reachability. Keep both phone libraries updated
+to refresh their country metadata.
 
 After `npm run build`, run `npm run test:contact` to exercise the production route
 against an isolated mock backend. These checks never send real emails.

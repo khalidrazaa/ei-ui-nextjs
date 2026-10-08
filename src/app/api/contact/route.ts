@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { siteConfig } from "@/config/site";
-import { normalizeContactPhone } from "@/lib/contact-phone";
+import { combineContactPhone, normalizeContactPhone } from "@/lib/contact-phone";
 import { ApiError, fetchPublicApi } from "@/lib/public-api";
 
 const MAX_BODY_BYTES = 24_000;
@@ -59,10 +59,15 @@ export async function POST(request: NextRequest) {
   const message = fields.message.trim();
   let phone: string | null;
   try {
-    phone = normalizeContactPhone(fields.phone);
+    if (fields.country_code !== undefined && typeof fields.country_code !== "string") {
+      throw new Error("Invalid country code");
+    }
+    phone = typeof fields.country_code === "string" && typeof fields.phone === "string"
+      ? combineContactPhone(fields.country_code, fields.phone)
+      : normalizeContactPhone(fields.phone);
   } catch {
     return NextResponse.json(
-      { detail: "Enter a phone number with its country code and 7–15 digits in total." },
+      { detail: "Enter a valid phone number for the selected country code." },
       { status: 422 }
     );
   }

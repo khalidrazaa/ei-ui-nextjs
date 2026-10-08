@@ -1,5 +1,5 @@
 .page {
-  width: min(960px, 100%);
+  width: 100%;
   margin-inline: auto;
   display: grid;
   gap: 1rem;
@@ -36,7 +36,7 @@
 }
 
 .aboutCard {
-  width: min(820px, 100%);
+  width: 100%;
   margin-inline: auto;
 }
 
