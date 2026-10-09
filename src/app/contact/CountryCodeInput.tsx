@@ -7,6 +7,7 @@ import styles from "../info-pages.module.css";
 
 const countryCodes = [
   { code: "+91", label: "India" },
+  { code: "+81", label: "Japaan" },
   { code: "+1", label: "US / Canada" },
   { code: "+44", label: "UK" },
   { code: "+971", label: "UAE" },

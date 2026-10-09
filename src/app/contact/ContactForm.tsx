@@ -1,11 +1,12 @@
 "use client";
 
-import { type ClipboardEvent, type FormEvent, useRef, useState } from "react";
+import { type ClipboardEvent, type FormEvent, startTransition, useRef, useState } from "react";
 
 import { combineContactPhone, contactPhoneInputDigits } from "@/lib/contact-phone";
 import { getContactAttribution } from "@/lib/contact-attribution";
 
 import styles from "../info-pages.module.css";
+import { submitContactAction } from "./actions";
 import CountryCodeInput from "./CountryCodeInput";
 
 export default function ContactForm() {
@@ -46,7 +47,7 @@ export default function ContactForm() {
     }
   }
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting.current) return;
 
@@ -78,43 +79,35 @@ export default function ContactForm() {
     submitting.current = true;
     setIsSubmitting(true);
     setFeedback(null);
-    try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+    startTransition(async () => {
+      try {
+        const result = await submitContactAction({
           name, email, message,
           ...(phone ? { phone, country_code: countryCode } : {}),
           ...(subject ? { subject } : {}),
           website,
           ...getContactAttribution(),
-        }),
-        signal: AbortSignal.timeout(25_000),
-      });
-      const data: unknown = await response.json().catch(() => null);
-      if (!response.ok || typeof data !== "object" || data === null || !("status" in data) || data.status !== true) {
-        const detail = typeof data === "object" && data !== null && "detail" in data && typeof data.detail === "string"
-          ? data.detail
-          : "Unable to send your message. Please try again or email core@explainit.tech.";
-        throw new Error(detail);
+        });
+        if (!result.status) {
+          setFeedback({ kind: "error", message: result.detail });
+          return;
+        }
+        form.reset();
+        setCountryCode("+91");
+        setPhoneNumber("");
+        setPhoneError(null);
+        setPhoneTouched(false);
+        setFeedback({ kind: "success", message: "Your message has been submitted. Thank you for getting in touch." });
+      } catch {
+        setFeedback({
+          kind: "error",
+          message: "Unable to send your message. Please try again or email core@explainit.tech.",
+        });
+      } finally {
+        submitting.current = false;
+        setIsSubmitting(false);
       }
-      form.reset();
-      setCountryCode("+91");
-      setPhoneNumber("");
-      setPhoneError(null);
-      setPhoneTouched(false);
-      setFeedback({ kind: "success", message: "Your message has been submitted. Thank you for getting in touch." });
-    } catch (error) {
-      setFeedback({
-        kind: "error",
-        message: error instanceof Error && error.name !== "TimeoutError" && error.name !== "AbortError" && error.name !== "TypeError"
-          ? error.message
-          : "Unable to send your message. Please try again or email core@explainit.tech.",
-      });
-    } finally {
-      submitting.current = false;
-      setIsSubmitting(false);
-    }
+    });
   }
 
   return (
