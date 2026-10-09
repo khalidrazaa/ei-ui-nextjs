@@ -26,6 +26,7 @@ export default function MobileDock() {
             href={item.href}
             className={active ? "active" : ""}
             aria-current={active ? "page" : undefined}
+            style={active ? { background: "var(--accent-soft)", color: "var(--accent)" } : undefined}
           >
             <Icon size={18} />
             <span>{item.label}</span>
