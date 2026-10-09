@@ -3,6 +3,7 @@
 import { type ClipboardEvent, type FormEvent, useRef, useState } from "react";
 
 import { combineContactPhone, contactPhoneInputDigits } from "@/lib/contact-phone";
+import { getContactAttribution } from "@/lib/contact-attribution";
 
 import styles from "../info-pages.module.css";
 import CountryCodeInput from "./CountryCodeInput";
@@ -54,6 +55,8 @@ export default function ContactForm() {
     const name = String(values.get("name") || "").trim();
     const email = String(values.get("email") || "").trim();
     const message = String(values.get("message") || "").trim();
+    const subject = String(values.get("subject") || "").trim();
+    const website = String(values.get("website") || "");
     let phone: string | null;
     try {
       phone = combineContactPhone(
@@ -79,7 +82,13 @@ export default function ContactForm() {
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, message, ...(phone ? { phone, country_code: countryCode } : {}) }),
+        body: JSON.stringify({
+          name, email, message,
+          ...(phone ? { phone, country_code: countryCode } : {}),
+          ...(subject ? { subject } : {}),
+          website,
+          ...getContactAttribution(),
+        }),
         signal: AbortSignal.timeout(25_000),
       });
       const data: unknown = await response.json().catch(() => null);
@@ -181,6 +190,14 @@ export default function ContactForm() {
             {phoneError}
           </p>
         )}
+      </div>
+      <label className={styles.field} htmlFor="contact-subject">
+        <span>Subject (optional)</span>
+        <input id="contact-subject" name="subject" maxLength={200} disabled={isSubmitting} />
+      </label>
+      <div className={styles.honeypot} aria-hidden="true">
+        <label htmlFor="contact-website">Leave this field empty</label>
+        <input id="contact-website" name="website" tabIndex={-1} autoComplete="off" maxLength={200} disabled={isSubmitting} />
       </div>
       <label className={styles.field} htmlFor="contact-message">
         <span>Message</span>

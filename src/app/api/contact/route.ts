@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { siteConfig } from "@/config/site";
+import { normalizeContactAttribution, normalizeOptionalContactText } from "@/lib/contact-attribution";
 import { combineContactPhone, normalizeContactPhone } from "@/lib/contact-phone";
 import { ApiError, fetchPublicApi } from "@/lib/public-api";
 
@@ -57,6 +58,16 @@ export async function POST(request: NextRequest) {
   const name = fields.name.trim();
   const email = fields.email.trim();
   const message = fields.message.trim();
+  let metadata: Record<string, string>;
+  try {
+    const subject = normalizeOptionalContactText(fields.subject, 200);
+    if (fields.website !== undefined && fields.website !== null && fields.website !== "") {
+      throw new Error("Invalid form data");
+    }
+    metadata = { ...normalizeContactAttribution(fields), ...(subject ? { subject } : {}) };
+  } catch {
+    return NextResponse.json({ detail: "Please check your form details." }, { status: 422 });
+  }
   let phone: string | null;
   try {
     if (fields.country_code !== undefined && typeof fields.country_code !== "string") {
@@ -72,9 +83,9 @@ export async function POST(request: NextRequest) {
     );
   }
   if (
-    !name || name.length > 80 || /[\r\n]/.test(name) ||
+    !name || name.length > 80 || /[\r\n\u0000]/.test(name) ||
     email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
-    !message || message.length > 5000
+    !message || message.length > 5000 || message.includes("\u0000")
   ) {
     return NextResponse.json(
       { detail: "Please check your name, email and message." },
@@ -87,7 +98,7 @@ export async function POST(request: NextRequest) {
       `/public/contact?host_site=${encodeURIComponent(siteConfig.hostSite)}`,
       {
         method: "POST",
-        body: JSON.stringify({ name, email, message, ...(phone ? { phone } : {}) }),
+        body: JSON.stringify({ name, email, message, ...(phone ? { phone } : {}), ...metadata }),
         cache: "no-store",
         signal: AbortSignal.timeout(20_000),
       }

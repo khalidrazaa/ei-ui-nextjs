@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import AppFooter from "@/components/shell/AppFooter";
 import AppHeader from "@/components/shell/AppHeader";
+import ContactAttribution from "@/components/shell/ContactAttribution";
 import MobileDock from "@/components/shell/MobileDock";
 import { siteConfig } from "@/config/site";
 
@@ -27,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="app-body">
+        <ContactAttribution />
         <div className="bg-orb bg-orb-one" aria-hidden />
         <div className="bg-orb bg-orb-two" aria-hidden />
         <AppHeader />
