@@ -21,7 +21,7 @@ const enquiries = [
 
 export default function ContactPage() {
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} page-fill`}>
       <section className={`${styles.panel} ${styles.contactCard}`} aria-labelledby="contact-title">
         <header>
           <h1 id="contact-title" className={styles.title}>Contact</h1>
