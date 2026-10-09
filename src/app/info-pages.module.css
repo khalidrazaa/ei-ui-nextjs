@@ -143,6 +143,14 @@
   gap: 0.8rem;
 }
 
+.honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .field {
   display: grid;
   gap: 0.3rem;

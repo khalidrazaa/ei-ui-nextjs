@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
+import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { setTimeout as delay } from "node:timers/promises";
 import { after, before, beforeEach, test } from "node:test";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
 
 const appDirectory = fileURLToPath(new URL("../", import.meta.url));
 const validMessage = { name: "Test Visitor", email: "visitor@example.com", message: "A contact form test." };
@@ -109,6 +111,93 @@ test("forwards trimmed fields using the server-only app key and fixed host", asy
   assert.deepEqual(requests[0].body, validMessage);
 });
 
+test("forwards a subject and bounded source attribution without private URL parameters", async () => {
+  const response = await post({
+    ...validMessage,
+    subject: "  Consulting enquiry  ",
+    landing_page: "  https://explainit.tech/articles/start?token=PRIVATE&utm_source=newsletter#private  ",
+    referrer: "  https://example.com/guide?email=PRIVATE#private  ",
+    utm_source: " newsletter ", utm_medium: "email", utm_campaign: "consulting",
+    utm_term: "automation", utm_content: "footer", website: "",
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: true, message: "Your message has been submitted." });
+  assert.deepEqual(requests[0].body, {
+    ...validMessage, subject: "Consulting enquiry",
+    landing_page: "https://explainit.tech/articles/start", referrer: "https://example.com/guide",
+    utm_source: "newsletter", utm_medium: "email", utm_campaign: "consulting",
+    utm_term: "automation", utm_content: "footer",
+  });
+  assert.equal(JSON.stringify(requests[0].body).includes("PRIVATE"), false);
+});
+
+test("keeps subject and attribution optional for existing clients", async () => {
+  const response = await post({
+    ...validMessage, subject: null, landing_page: "", referrer: null,
+    utm_source: " ", utm_campaign: null, website: null,
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(requests[0].body, validMessage);
+});
+
+test("rejects malformed or oversized metadata without contacting the backend", async () => {
+  for (const metadata of [
+    { subject: 123 }, { subject: "a".repeat(201) }, { subject: "Header\r\nInjected" },
+    { landing_page: "javascript:alert(1)" }, { landing_page: "/contact" },
+    { landing_page: "https://user:password@example.com/" },
+    { landing_page: "https://example.com/a b" },
+    { landing_page: "https://example.com/\\private" },
+    { referrer: "https://example.com/a\u0085b" },
+    { landing_page: "https://example.com/" + "a".repeat(2048) },
+    { referrer: {} }, { referrer: "https://example.com/\n" }, { referrer: "ftp://example.com/" },
+    { utm_source: [] }, { utm_medium: "a".repeat(201) }, { utm_campaign: "line\nline" },
+    { utm_term: "\u0000" }, { utm_content: "\u007f" },
+  ]) {
+    assert.equal((await post({ ...validMessage, ...metadata })).status, 422);
+  }
+  assert.equal(requests.length, 0);
+});
+
+test("rejects filled or malformed honeypots before contacting the backend", async () => {
+  for (const website of ["https://spam.example.com", " ", "a".repeat(201), 123, {}, []]) {
+    assert.equal((await post({ ...validMessage, website })).status, 422);
+  }
+  assert.equal(requests.length, 0);
+});
+
+test("captures the first session landing page and campaign when navigating to contact", async () => {
+  const source = await readFile(new URL("../src/lib/contact-attribution.ts", import.meta.url), "utf8");
+  const { outputText } = ts.transpileModule(source, {
+    compilerOptions: { target: ts.ScriptTarget.ES2017, module: ts.ModuleKind.ESNext },
+  });
+  const { getContactAttribution } = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString("base64")}`);
+  const savedWindow = globalThis.window;
+  const savedDocument = globalThis.document;
+  const storage = new Map();
+  try {
+    globalThis.window = {
+      location: { href: "https://explainit.tech/articles/first?utm_source=newsletter&utm_campaign=consulting&token=PRIVATE#private" },
+      sessionStorage: { getItem: (key) => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) },
+    };
+    globalThis.document = { referrer: "https://example.com/start?email=PRIVATE#private" };
+    const expected = {
+      landing_page: "https://explainit.tech/articles/first", referrer: "https://example.com/start",
+      utm_source: "newsletter", utm_campaign: "consulting",
+    };
+    assert.deepEqual(getContactAttribution(), expected);
+    globalThis.window.location.href = "https://explainit.tech/contact?utm_source=changed";
+    assert.deepEqual(getContactAttribution(), expected);
+    assert.equal([...storage.values()].join("").includes("PRIVATE"), false);
+    const reloaded = await import(`data:text/javascript;base64,${Buffer.from(outputText + "\n// session reload").toString("base64")}`);
+    assert.deepEqual(reloaded.getContactAttribution(), expected);
+  } finally {
+    if (savedWindow === undefined) delete globalThis.window;
+    else globalThis.window = savedWindow;
+    if (savedDocument === undefined) delete globalThis.document;
+    else globalThis.document = savedDocument;
+  }
+});
+
 test("rejects malformed and non-object JSON without contacting the backend", async () => {
   for (const rawBody of ["{", "", "null", "[]", '"a string"']) {
     const response = await post(null, { rawBody });
@@ -182,8 +271,10 @@ test("rejects invalid or oversized fields without contacting the backend", async
   for (const payload of [
     {}, { ...validMessage, name: 123 }, { ...validMessage, name: " " },
     { ...validMessage, name: "a".repeat(81) }, { ...validMessage, name: "Visitor\r\nInjected" },
+    { ...validMessage, name: "Visitor\u0000Injected" },
     { ...validMessage, email: "not-an-email" }, { ...validMessage, message: " " },
     { ...validMessage, message: "a".repeat(5001) },
+    { ...validMessage, message: "A question\u0000Injected" },
   ]) {
     assert.equal((await post(payload)).status, 422);
   }
@@ -229,6 +320,8 @@ test("production Contact page exposes the form without the backend key", async (
   assert.ok(html.includes('mailto:core@explainit.tech'));
   assert.ok(html.includes('name="message"'));
   assert.ok(html.includes('name="phone"'));
+  assert.ok(html.includes('name="subject"'));
+  assert.ok(html.includes('name="website"'));
   assert.ok(html.includes('aria-label="Country code"'));
   assert.ok(html.includes('id="contact-country-code"'));
   assert.ok(html.includes('role="combobox"'));
