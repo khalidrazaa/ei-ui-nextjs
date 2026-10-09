@@ -6,8 +6,10 @@ import { createServer } from "node:http";
 import { setTimeout as delay } from "node:timers/promises";
 import { after, before, beforeEach, test } from "node:test";
 import { fileURLToPath } from "node:url";
+import flightClient from "next/dist/compiled/react-server-dom-turbopack/cjs/react-server-dom-turbopack-client.node.production.js";
 import ts from "typescript";
 
+const { createFromFetch, encodeReply } = flightClient;
 const appDirectory = fileURLToPath(new URL("../", import.meta.url));
 const validMessage = { name: "Test Visitor", email: "visitor@example.com", message: "A contact form test." };
 let backend;
@@ -15,6 +17,8 @@ let nextProcess;
 let endpoint;
 let reply;
 let requests;
+let backendOrigin;
+let contactActionId;
 
 async function listen(server) {
   server.listen(0, "127.0.0.1");
@@ -30,7 +34,32 @@ async function post(payload, options = {}) {
   });
 }
 
+async function submitContactAction(payload, url = endpoint.replace("/api/contact", "/contact")) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Accept: "text/x-component",
+      "Next-Action": contactActionId,
+      Origin: new URL(url).origin,
+    },
+    body: await encodeReply([payload]),
+  });
+  assert.equal(response.status, 200);
+  assert.ok(response.headers.get("content-type")?.startsWith("text/x-component"));
+  const result = await createFromFetch(Promise.resolve(response), {
+    serverConsumerManifest: { moduleMap: {}, serverModuleMap: {}, moduleLoading: null },
+  });
+  return await result.a;
+}
+
 before(async () => {
+  const manifest = JSON.parse(await readFile(new URL("../.next/server/server-reference-manifest.json", import.meta.url), "utf8"));
+  const contactActions = Object.entries(manifest.node).filter(([, action]) =>
+    action.exportedName === "submitContactAction" && Object.hasOwn(action.workers, "app/contact/page")
+  );
+  assert.equal(contactActions.length, 1, "Build the Contact page server action before running these tests.");
+  [contactActionId] = contactActions[0];
+
   backend = createServer(async (request, response) => {
     const chunks = [];
     for await (const chunk of request) chunks.push(chunk);
@@ -40,10 +69,12 @@ before(async () => {
       headers: request.headers,
       body: JSON.parse(Buffer.concat(chunks).toString("utf8")),
     });
-    response.writeHead(reply.status, { "Content-Type": "application/json" });
-    response.end(reply.raw ?? JSON.stringify(reply.body));
+    const isContactEndpoint = request.url === "/v1/public/contact?host_site=explainit.tech";
+    response.writeHead(isContactEndpoint ? reply.status : 404, { "Content-Type": "application/json" });
+    response.end(isContactEndpoint ? reply.raw ?? JSON.stringify(reply.body) : JSON.stringify({ detail: "Not Found" }));
   });
   const backendPort = await listen(backend);
+  backendOrigin = `http://127.0.0.1:${backendPort}`;
   const portReservation = createServer();
   const appPort = await listen(portReservation);
   await new Promise((resolve) => portReservation.close(resolve));
@@ -82,7 +113,7 @@ before(async () => {
 
 beforeEach(() => {
   requests = [];
-  reply = { status: 200, body: { status: true, message: "Provider accepted the message." } };
+  reply = { status: 200, body: { status: true, message: "Your message has been submitted." } };
 });
 
 after(async () => {
@@ -109,6 +140,81 @@ test("forwards trimmed fields using the server-only app key and fixed host", asy
   assert.equal(requests[0].url, "/v1/public/contact?host_site=explainit.tech");
   assert.equal(requests[0].headers["x-public-app-key"], "contact-test-key");
   assert.deepEqual(requests[0].body, validMessage);
+});
+
+test("submits the production server action on /contact when the proxy rewrites /api/ to FastAPI", async () => {
+  const proxyRequests = [];
+  const proxy = createServer(async (request, response) => {
+    try {
+      proxyRequests.push({ method: request.method, url: request.url });
+      const chunks = [];
+      for await (const chunk of request) chunks.push(chunk);
+      const destination = request.url.startsWith("/api/")
+        ? new URL(request.url.replace(/^\/api\//, "/v1/"), backendOrigin)
+        : new URL(request.url, endpoint);
+      const headers = {
+        ...request.headers,
+        "accept-encoding": "identity",
+        "x-forwarded-host": request.headers.host,
+        "x-forwarded-proto": "http",
+      };
+      delete headers.connection;
+      delete headers["transfer-encoding"];
+      const upstream = await fetch(destination, {
+        method: request.method,
+        headers,
+        body: chunks.length ? Buffer.concat(chunks) : undefined,
+      });
+      response.writeHead(upstream.status, { "Content-Type": upstream.headers.get("content-type") || "text/plain" });
+      response.end(Buffer.from(await upstream.arrayBuffer()));
+    } catch (error) {
+      response.writeHead(502);
+      response.end(String(error));
+    }
+  });
+  const proxyPort = await listen(proxy);
+  const origin = `http://127.0.0.1:${proxyPort}`;
+  try {
+    const legacyResponse = await fetch(`${origin}/api/contact`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(validMessage),
+    });
+    assert.equal(legacyResponse.status, 404);
+    assert.equal(requests[0].url, "/v1/contact");
+    requests = [];
+
+    assert.deepEqual(await submitContactAction(validMessage, `${origin}/contact`), {
+      status: true, message: "Your message has been submitted.",
+    });
+    assert.deepEqual(proxyRequests, [
+      { method: "POST", url: "/api/contact" },
+      { method: "POST", url: "/contact" },
+    ]);
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].url, "/v1/public/contact?host_site=explainit.tech");
+    assert.equal(requests[0].headers["x-public-app-key"], "contact-test-key");
+    assert.deepEqual(requests[0].body, validMessage);
+  } finally {
+    proxy.closeAllConnections();
+    await new Promise((resolve) => proxy.close(resolve));
+  }
+});
+
+test("validates server action payloads before forwarding them", async () => {
+  for (const payload of [null, [], { ...validMessage, email: "invalid" }, { ...validMessage, website: "spam" }]) {
+    const result = await submitContactAction(payload);
+    assert.equal(result.status, false);
+    assert.equal(typeof result.detail, "string");
+  }
+  assert.equal(requests.length, 0);
+});
+
+test("returns safe server action failure details when the backend rejects a message", async () => {
+  reply = { status: 429, body: { detail: "PRIVATE_PROVIDER_OR_CONFIG_ERROR" } };
+  assert.deepEqual(await submitContactAction(validMessage), {
+    status: false, detail: "Too many messages. Please wait a little before trying again.",
+  });
 });
 
 test("forwards a subject and bounded source attribution without private URL parameters", async () => {
