@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} page-fill`}>
       <section className={`${styles.panel} ${styles.aboutCard}`} aria-labelledby="about-title">
         <h1 id="about-title" className={styles.title}>About {siteConfig.brandName}</h1>
         <p className={styles.lead}>

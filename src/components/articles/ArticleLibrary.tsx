@@ -1,20 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSelectedLayoutSegment } from "next/navigation";
+import { type ReactNode, useEffect, useId, useMemo, useState } from "react";
 
 import { articlePath, formatDate } from "@/lib/format";
 import { Article } from "@/types/article";
 
 type ArticleLibraryProps = {
   articles: Article[];
+  children: ReactNode;
 };
-
-type ArticleIndexItem = Pick<Article, "id" | "slug" | "title" | "published_at" | "created_at" | "category" | "subcategory">;
 
 type ArticleIndexBranch = {
   subcategory: string;
-  articles: ArticleIndexItem[];
 };
 
 type ArticleIndexGroup = {
@@ -40,50 +39,31 @@ function parsePublishedTime(article: Pick<Article, "published_at" | "created_at"
 }
 
 function buildArticleIndex(articles: Article[]): ArticleIndexGroup[] {
-  const grouped = new Map<string, Map<string, ArticleIndexItem[]>>();
+  const grouped = new Map<string, Set<string>>();
 
   for (const article of articles) {
     const category = articleCategory(article);
     const subcategory = articleSubcategory(article);
 
-    if (!grouped.has(category)) {
-      grouped.set(category, new Map<string, ArticleIndexItem[]>());
-    }
-
-    const subcategoryMap = grouped.get(category);
-    if (!subcategoryMap) {
-      continue;
-    }
-
-    if (!subcategoryMap.has(subcategory)) {
-      subcategoryMap.set(subcategory, []);
-    }
-
-    subcategoryMap.get(subcategory)?.push({
-      id: article.id,
-      slug: article.slug,
-      title: article.title,
-      published_at: article.published_at,
-      created_at: article.created_at,
-      category: article.category,
-      subcategory: article.subcategory,
-    });
+    const subcategories = grouped.get(category) || new Set<string>();
+    subcategories.add(subcategory);
+    grouped.set(category, subcategories);
   }
 
   return Array.from(grouped.entries())
     .sort(([left], [right]) => left.localeCompare(right))
-    .map(([category, subcategoryMap]) => ({
+    .map(([category, subcategories]) => ({
       category,
-      branches: Array.from(subcategoryMap.entries())
-        .sort(([left], [right]) => left.localeCompare(right))
-        .map(([subcategory, items]) => ({
-          subcategory,
-          articles: [...items].sort((left, right) => parsePublishedTime(right) - parsePublishedTime(left)),
-        })),
+      branches: Array.from(subcategories)
+        .sort((left, right) => left.localeCompare(right))
+        .map((subcategory) => ({ subcategory })),
     }));
 }
 
-export default function ArticleLibrary({ articles }: ArticleLibraryProps) {
+export default function ArticleLibrary({ articles, children }: ArticleLibraryProps) {
+  const router = useRouter();
+  const isReadingArticle = useSelectedLayoutSegment() !== null;
+  const categoryListPrefix = useId();
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
@@ -144,9 +124,17 @@ export default function ArticleLibrary({ articles }: ArticleLibraryProps) {
     }));
   };
 
+  const showArticleList = () => {
+    if (isReadingArticle) {
+      setQuery("");
+      router.push("/articles", { scroll: false });
+    }
+  };
+
   const resetFilter = () => {
     setSelectedCategory(null);
     setSelectedSubcategory(null);
+    showArticleList();
   };
 
   return (
@@ -163,99 +151,103 @@ export default function ArticleLibrary({ articles }: ArticleLibraryProps) {
           {indexGroups.map((group) => {
             const isExpanded = expandedCategories[group.category] !== false;
             const isActiveCategory = selectedCategory === group.category && !selectedSubcategory;
+            const subcategoryListId = `${categoryListPrefix}-${encodeURIComponent(group.category)}`;
 
             return (
               <section key={group.category} className="article-index-group">
-                <button
-                  type="button"
-                  className={`article-index-category-toggle ${isActiveCategory ? "article-index-category-toggle-active" : ""}`}
-                  onClick={() => toggleCategory(group.category)}
-                >
-                  <span>{group.category}</span>
-                  <span aria-hidden>{isExpanded ? "-" : "+"}</span>
-                </button>
+                <div className="article-index-category-header">
+                  <button
+                    type="button"
+                    className={`article-index-category-button ${isActiveCategory ? "article-index-category-button-active" : ""}`}
+                    aria-pressed={isActiveCategory}
+                    onClick={() => {
+                      setSelectedCategory(group.category);
+                      setSelectedSubcategory(null);
+                      showArticleList();
+                    }}
+                  >
+                    {group.category}
+                  </button>
+                  <button
+                    type="button"
+                    className="article-index-category-toggle"
+                    aria-label={`${isExpanded ? "Collapse" : "Expand"} ${group.category}`}
+                    aria-expanded={isExpanded}
+                    aria-controls={subcategoryListId}
+                    onClick={() => toggleCategory(group.category)}
+                  >
+                    <span aria-hidden="true">{isExpanded ? "-" : "+"}</span>
+                  </button>
+                </div>
 
-                {isExpanded && (
-                  <ul className="article-index-subcategory-list">
-                    <li>
-                      <button
-                        type="button"
-                        className={`article-index-subcategory-button ${isActiveCategory ? "article-index-subcategory-button-active" : ""}`}
-                        onClick={() => {
-                          setSelectedCategory(group.category);
-                          setSelectedSubcategory(null);
-                        }}
-                      >
-                        <span>All in {group.category}</span>
-                      </button>
-                    </li>
+                <ul id={subcategoryListId} className="article-index-subcategory-list" hidden={!isExpanded}>
+                  {group.branches.map((branch) => {
+                    const isActiveSubcategory =
+                      selectedCategory === group.category && selectedSubcategory === branch.subcategory;
 
-                    {group.branches.map((branch) => {
-                      const isActiveSubcategory =
-                        selectedCategory === group.category && selectedSubcategory === branch.subcategory;
-
-                      return (
-                        <li key={`${group.category}-${branch.subcategory}`}>
-                          <button
-                            type="button"
-                            className={`article-index-subcategory-button ${isActiveSubcategory ? "article-index-subcategory-button-active" : ""}`}
-                            onClick={() => {
-                              setSelectedCategory(group.category);
-                              setSelectedSubcategory(branch.subcategory);
-                            }}
-                          >
-                            <span>{branch.subcategory}</span>
-                            <small>{branch.articles.length}</small>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
+                    return (
+                      <li key={`${group.category}-${branch.subcategory}`}>
+                        <button
+                          type="button"
+                          className={`article-index-subcategory-button ${isActiveSubcategory ? "article-index-subcategory-button-active" : ""}`}
+                          aria-pressed={isActiveSubcategory}
+                          onClick={() => {
+                            setSelectedCategory(group.category);
+                            setSelectedSubcategory(branch.subcategory);
+                            showArticleList();
+                          }}
+                        >
+                          {branch.subcategory}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
               </section>
             );
           })}
         </nav>
       </aside>
 
-      <section className="article-library-content">
-        <div className="article-library-topbar">
-          <div className="article-library-meta">
-            <h2>Published Titles</h2>
-            <p>
-              {activeFilterLabel} | {filteredArticles.length} results
-            </p>
-          </div>
-
-          <label className="article-library-search" htmlFor="article-library-search">
-            <span>Search</span>
-            <input
-              id="article-library-search"
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Find title, category, subcategory"
-              aria-label="Search articles"
-            />
-          </label>
-        </div>
-
-
-
-        {!filteredArticles.length ? (
-          <div className="empty-state">
-            <h3>{articles.length ? "No titles match this view" : "No articles published yet"}</h3>
-            {articles.length > 0 && <p>Try another search or select a different category.</p>}
-          </div>
+      <section className={`article-library-content${isReadingArticle ? " article-library-detail" : ""}`}>
+        {isReadingArticle ? (
+          children
         ) : (
-          <div className="article-title-list">
-            {filteredArticles.map((article) => (
-              <Link key={article.id} href={articlePath(article)} className="article-title-card">
-                <h3>{article.title}</h3>
-                <p>{formatDate(article.published_at || article.created_at)}</p>
-              </Link>
-            ))}
-          </div>
+          <>
+            {children}
+            <div className="article-library-topbar">
+              <div className="article-library-meta">
+                <p>{activeFilterLabel}</p>
+              </div>
+
+              <div className="article-library-search">
+                <input
+                  id="article-library-search"
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Find title, category, subcategory"
+                  aria-label="Search articles"
+                />
+              </div>
+            </div>
+
+            {!filteredArticles.length ? (
+              <div className="empty-state">
+                <h3>{articles.length ? "No titles match this view" : "No articles published yet"}</h3>
+                {articles.length > 0 && <p>Try another search or select a different category.</p>}
+              </div>
+            ) : (
+              <div className="article-title-list">
+                {filteredArticles.map((article) => (
+                  <Link key={article.id} href={articlePath(article)} className="article-title-card">
+                    <h3>{article.title}</h3>
+                    <p>{formatDate(article.published_at || article.created_at)}</p>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>
