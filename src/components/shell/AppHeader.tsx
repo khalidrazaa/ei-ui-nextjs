@@ -21,7 +21,12 @@ export default function AppHeader() {
             const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
 
             return (
-              <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined}>
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                style={active ? { background: "var(--accent-soft)", color: "var(--accent)" } : undefined}
+              >
                 {item.label}
               </Link>
             );
