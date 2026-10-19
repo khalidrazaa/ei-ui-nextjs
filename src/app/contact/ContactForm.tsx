@@ -2,10 +2,13 @@
 
 import { type ClipboardEvent, type FormEvent, startTransition, useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import FormField from "@/components/common/FormField";
+import { Textarea } from "@/components/ui/textarea";
 import { combineContactPhone, contactPhoneInputDigits } from "@/lib/contact-phone";
 import { getContactAttribution } from "@/lib/contact-attribution";
 
-import styles from "../info-pages.module.css";
 import { submitContactAction } from "./actions";
 import CountryCodeInput from "./CountryCodeInput";
 
@@ -112,26 +115,23 @@ export default function ContactForm() {
 
   return (
     <form
-      className={styles.form}
+      className="flex flex-col gap-5"
       aria-label="Send a message"
       aria-describedby={feedback ? "contact-form-feedback" : undefined}
       aria-busy={isSubmitting}
       onSubmit={onSubmit}
       onChange={() => setFeedback(null)}
     >
-      <div className={styles.formRow}>
-        <label className={styles.field} htmlFor="contact-name">
-          <span>Name</span>
-          <input id="contact-name" name="name" autoComplete="name" maxLength={80} disabled={isSubmitting} required />
-        </label>
-        <label className={styles.field} htmlFor="contact-email">
-          <span>Email</span>
-          <input id="contact-email" name="email" type="email" autoComplete="email" maxLength={254} disabled={isSubmitting} required />
-        </label>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <FormField id="contact-name" label="Name">
+          <Input className="bg-card" id="contact-name" name="name" autoComplete="name" maxLength={80} disabled={isSubmitting} required />
+        </FormField>
+        <FormField id="contact-email" label="Email">
+          <Input className="bg-card" id="contact-email" name="email" type="email" autoComplete="email" maxLength={254} disabled={isSubmitting} required />
+        </FormField>
       </div>
-      <div className={styles.field}>
-        <label htmlFor="contact-phone"><span>Phone</span></label>
-        <div className={styles.phoneRow}>
+      <FormField id="contact-phone" label="Phone">
+        <div className="flex gap-2">
           <CountryCodeInput
             value={countryCode}
             onChange={(value) => {
@@ -145,7 +145,8 @@ export default function ContactForm() {
             }}
             disabled={isSubmitting}
           />
-          <input
+          <Input
+            className="bg-card"
             ref={phoneRef}
             id="contact-phone"
             name="phone"
@@ -175,39 +176,37 @@ export default function ContactForm() {
             disabled={isSubmitting}
           />
         </div>
-        <p id="contact-phone-hint" className={styles.fieldHint}>
+        <p id="contact-phone-hint" className="text-xs text-muted-foreground">
           Enter the number for the selected country code.
         </p>
         {phoneError && (
-          <p id="contact-phone-error" className={`${styles.formNote} ${styles.formError}`} role="alert">
+          <p id="contact-phone-error" className="text-sm text-destructive" role="alert">
             {phoneError}
           </p>
         )}
-      </div>
-      <label className={styles.field} htmlFor="contact-subject">
-        <span>Subject (optional)</span>
-        <input id="contact-subject" name="subject" maxLength={200} disabled={isSubmitting} />
-      </label>
-      <div className={styles.honeypot} aria-hidden="true">
+      </FormField>
+      <FormField id="contact-subject" label="Subject (optional)">
+          <Input className="bg-card" id="contact-subject" name="subject" maxLength={200} disabled={isSubmitting} />
+      </FormField>
+      <div className="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden="true">
         <label htmlFor="contact-website">Leave this field empty</label>
         <input id="contact-website" name="website" tabIndex={-1} autoComplete="off" maxLength={200} disabled={isSubmitting} />
       </div>
-      <label className={styles.field} htmlFor="contact-message">
-        <span>Message</span>
-        <textarea id="contact-message" name="message" rows={4} maxLength={5000} disabled={isSubmitting} required />
-      </label>
+      <FormField id="contact-message" label="Message">
+        <Textarea className="bg-card" id="contact-message" name="message" rows={4} maxLength={5000} disabled={isSubmitting} required />
+      </FormField>
       {feedback && (
         <p
           id="contact-form-feedback"
-          className={`${styles.formNote} ${feedback.kind === "error" ? styles.formError : styles.formSuccess}`}
+          className={feedback.kind === "error" ? "text-sm text-destructive" : "text-sm text-success"}
           role={feedback.kind === "error" ? "alert" : "status"}
         >
           {feedback.message}
         </p>
       )}
-      <button className={styles.sendButton} type="submit" disabled={isSubmitting}>
+      <Button type="submit" size="lg" disabled={isSubmitting} className="self-start">
         {isSubmitting ? "Sending…" : "Send Message"}
-      </button>
+      </Button>
     </form>
   );
 }
