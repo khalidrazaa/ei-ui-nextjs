@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Source_Serif_4 } from "next/font/google";
 
+import Container from "@/components/common/Container";
 import AppFooter from "@/components/shell/AppFooter";
 import AppHeader from "@/components/shell/AppHeader";
 import ContactAttribution from "@/components/shell/ContactAttribution";
@@ -44,9 +45,9 @@ export default function RootLayout({
         <MotionProvider>
         <ContactAttribution />
         <AppHeader />
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-10 pt-6 sm:px-6 md:pt-10">
+        <Container as="main" className="flex-1 py-6 md:py-8">
           {children}
-        </main>
+        </Container>
         <AppFooter />
         <MobileDock />
         </MotionProvider>
