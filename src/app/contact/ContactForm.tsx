@@ -115,14 +115,14 @@ export default function ContactForm() {
 
   return (
     <form
-      className="flex flex-col gap-5"
+      className="flex flex-col gap-4"
       aria-label="Send a message"
       aria-describedby={feedback ? "contact-form-feedback" : undefined}
       aria-busy={isSubmitting}
       onSubmit={onSubmit}
       onChange={() => setFeedback(null)}
     >
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <FormField id="contact-name" label="Name">
           <Input className="bg-card" id="contact-name" name="name" autoComplete="name" maxLength={80} disabled={isSubmitting} required />
         </FormField>

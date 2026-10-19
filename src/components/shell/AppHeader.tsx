@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import BrandMark from "@/components/common/BrandMark";
+import BrandLockup from "@/components/common/BrandLockup";
 import Container from "@/components/common/Container";
 import ActivePill from "@/components/motion/ActivePill";
 import { navItems } from "@/config/navigation";
-import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
 import { isActivePath } from "./nav";
@@ -18,17 +17,7 @@ export default function AppHeader() {
   return (
     <header className="glass sticky top-0 z-40 border-b border-border/80">
       <Container className="flex h-(--header-height) items-center justify-between gap-4">
-        <Link
-          href="/"
-          className="flex items-center gap-2.5"
-          aria-label={`${siteConfig.brandName} home`}
-        >
-          <BrandMark />
-          <span className="flex items-baseline gap-2">
-            <span className="text-base font-semibold tracking-tight">{siteConfig.brandName}</span>
-            <span className="hidden text-xs text-muted-foreground lg:inline">{siteConfig.tagline}</span>
-          </span>
-        </Link>
+        <BrandLockup />
 
         <nav className="hidden items-center gap-0.5 md:flex" aria-label="Primary navigation">
           {navItems.map((item) => {

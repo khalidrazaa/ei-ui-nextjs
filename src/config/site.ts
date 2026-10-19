@@ -1,3 +1,5 @@
+import { Github, Linkedin, type LucideIcon } from "lucide-react";
+
 export type SiteConfig = {
   brandName: string;
   domain: string;
@@ -8,7 +10,7 @@ export type SiteConfig = {
   contactEmail: string;
   /** Mirrors the --background token in globals.css (browser UI colour). */
   themeColor: string;
-  socialLinks: Array<{ href: string; label: string }>;
+  socialLinks: Array<{ href: string; label: string; icon: LucideIcon }>;
   enquiries: string[];
 };
 
@@ -23,8 +25,8 @@ export const siteConfig: SiteConfig = {
   contactEmail: "core@explainit.tech",
   themeColor: "#e9eef8",
   socialLinks: [
-    { href: "https://www.linkedin.com/in/khalidrazaa/", label: "LinkedIn" },
-    { href: "https://github.com/khalidrazaa", label: "GitHub" },
+    { href: "https://www.linkedin.com/in/khalidrazaa/", label: "LinkedIn", icon: Linkedin },
+    { href: "https://github.com/khalidrazaa", label: "GitHub", icon: Github },
   ],
   enquiries: [
     "Article ideas or feedback",

@@ -40,7 +40,7 @@ export default function ContactPage() {
       </section>
 
       <Card className="shadow-none">
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           <ContactForm />
         </CardContent>
       </Card>

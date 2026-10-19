@@ -1,4 +1,4 @@
-import { Mail } from "lucide-react";
+import { Mail, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 import BrandMark from "@/components/common/BrandMark";
@@ -6,65 +6,87 @@ import Container from "@/components/common/Container";
 import { navItems } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
 
-type FooterColumnProps = {
-  title: string;
+type FooterLinkProps = {
+  href: string;
   children: React.ReactNode;
+  icon?: LucideIcon;
+  external?: boolean;
+  label?: string;
 };
 
-function FooterColumn({ title, children }: FooterColumnProps) {
+function FooterLink({ href, children, icon: Icon, external, label }: FooterLinkProps) {
+  const className =
+    "inline-flex h-7 items-center gap-2 text-sm text-foreground/80 transition-colors hover:text-primary";
+  const content = (
+    <>
+      {Icon && <Icon className="size-4 shrink-0" aria-hidden="true" />}
+      {children}
+    </>
+  );
+
+  return external ? (
+    <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className={className}>
+      {content}
+    </a>
+  ) : (
+    <Link href={href} className={className}>
+      {content}
+    </Link>
+  );
+}
+
+function FooterColumn({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <nav aria-label={title} className="flex flex-col gap-2">
-      <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</h2>
-      <ul className="flex flex-col gap-1.5 text-sm">{children}</ul>
+    <nav aria-label={title}>
+      <h2 className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</h2>
+      <ul className="flex flex-col">{children}</ul>
     </nav>
   );
 }
 
-const linkClass = "text-foreground/80 transition-colors hover:text-primary";
-
 export default function AppFooter() {
   return (
-    <footer className="border-t border-border bg-card/40 pb-[calc(var(--dock-height)+env(safe-area-inset-bottom))] md:pb-0">
-      <Container className="grid grid-cols-2 gap-x-6 gap-y-8 py-8 md:grid-cols-[1.6fr_1fr_1fr]">
-        <div className="col-span-2 flex flex-col gap-3 md:col-span-1">
+    <footer className="border-t border-border pb-[calc(var(--dock-height)+env(safe-area-inset-bottom))] md:pb-0">
+      <Container className="flex flex-col gap-6 py-6 md:flex-row md:justify-between">
+        <div className="flex max-w-xs flex-col gap-2.5">
           <Link href="/" className="flex items-center gap-2.5" aria-label={`${siteConfig.brandName} home`}>
-            <BrandMark />
+            <BrandMark className="size-8" />
             <span className="text-base font-semibold tracking-tight">{siteConfig.brandName}</span>
           </Link>
-          <p className="max-w-xs text-sm text-muted-foreground">{siteConfig.footerTagline}</p>
+          <p className="text-sm text-muted-foreground">{siteConfig.footerTagline}</p>
         </div>
 
-        <FooterColumn title="Explore">
-          {navItems.map((item) => (
-            <li key={item.href}>
-              <Link href={item.href} className={linkClass}>
-                {item.label}
-              </Link>
-            </li>
-          ))}
-        </FooterColumn>
+        <div className="grid grid-cols-2 gap-x-10 sm:gap-x-14">
+          <FooterColumn title="Explore">
+            {navItems.map((item) => (
+              <li key={item.href}>
+                <FooterLink href={item.href} icon={item.icon}>
+                  {item.label}
+                </FooterLink>
+              </li>
+            ))}
+          </FooterColumn>
 
-        <FooterColumn title="Connect">
-          <li>
-            <a href={`mailto:${siteConfig.contactEmail}`} className={`${linkClass} inline-flex items-center gap-1.5`}>
-              <Mail className="size-3.5" aria-hidden="true" />
-              {siteConfig.contactEmail}
-            </a>
-          </li>
-          {siteConfig.socialLinks.map((link) => (
-            <li key={link.href}>
-              <a
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`${link.label} (opens in a new tab)`}
-                className={linkClass}
-              >
-                {link.label}
-              </a>
+          <FooterColumn title="Connect">
+            <li>
+              <FooterLink href={`mailto:${siteConfig.contactEmail}`} icon={Mail} external>
+                Email
+              </FooterLink>
             </li>
-          ))}
-        </FooterColumn>
+            {siteConfig.socialLinks.map((link) => (
+              <li key={link.href}>
+                <FooterLink
+                  href={link.href}
+                  icon={link.icon}
+                  external
+                  label={`${link.label} (opens in a new tab)`}
+                >
+                  {link.label}
+                </FooterLink>
+              </li>
+            ))}
+          </FooterColumn>
+        </div>
       </Container>
 
       <div className="border-t border-border">
