@@ -12,6 +12,7 @@ export type SiteConfig = {
   themeColor: string;
   socialLinks: Array<{ href: string; label: string; icon: LucideIcon }>;
   enquiries: string[];
+  footerCta: { title: string; description: string; label: string };
 };
 
 export const siteConfig: SiteConfig = {
@@ -28,6 +29,11 @@ export const siteConfig: SiteConfig = {
     { href: "https://www.linkedin.com/in/khalidrazaa/", label: "LinkedIn", icon: Linkedin },
     { href: "https://github.com/khalidrazaa", label: "GitHub", icon: Github },
   ],
+  footerCta: {
+    title: "Have a question or an idea?",
+    description: "Reach out about articles, projects or collaboration.",
+    label: "Get in touch",
+  },
   enquiries: [
     "Article ideas or feedback",
     "Data and analytics projects",
