@@ -46,6 +46,14 @@
   --success: #1f7a4d;
   --success-foreground: #ffffff;
 
+  /* Page backdrop (original explainit gradient stops) */
+  --page-glow: #f8fbff;
+  --page-sky: #d4e4ff;
+  --page-warm: #fcecd2;
+  --page-from: #eef3fd;
+  --page-mid: #e4ecfa;
+  --page-to: #ebf1fb;
+
   /* Shape */
   --radius: 0.75rem;
 
@@ -102,8 +110,15 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply text-foreground font-sans antialiased;
     min-height: 100dvh;
+    background-color: var(--background);
+    background-image:
+      radial-gradient(circle at 12% 12%, var(--page-glow) 0%, transparent 36%),
+      radial-gradient(circle at 88% 4%, var(--page-sky) 0%, transparent 32%),
+      radial-gradient(circle at 54% 98%, var(--page-warm) 0%, transparent 28%),
+      linear-gradient(160deg, var(--page-from) 0%, var(--page-mid) 58%, var(--page-to) 100%);
+    background-attachment: fixed;
     line-height: 1.55;
   }
 
