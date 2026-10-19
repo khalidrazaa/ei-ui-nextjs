@@ -61,8 +61,8 @@ export default function ArticleFeed({
   const rest = filtered.slice(1);
 
   return (
-    <section className="flex flex-col gap-6" aria-labelledby="feed-title">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <section className="flex flex-col gap-4" aria-labelledby="feed-title">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 id="feed-title">{title}</h2>
           {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
@@ -106,10 +106,10 @@ export default function ArticleFeed({
           description={articles.length ? "Try another keyword or category." : undefined}
         />
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {lead && <ArticleCard article={lead} priority variant="spotlight" />}
           {rest.length > 0 && (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {rest.map((article) => (
                 <ArticleCard key={article.id} article={article} />
               ))}

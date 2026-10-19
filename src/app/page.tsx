@@ -4,14 +4,12 @@ import { getPublishedArticles } from "@/lib/articles";
 
 export default async function HomePage() {
   const { articles } = await getPublishedArticles(120);
+  const categoryCount = new Set(articles.map((article) => article.category).filter(Boolean)).size;
 
   return (
-    <div className="flex flex-col gap-10">
-      <HeroBanner articleCount={articles.length} />
-      <ArticleFeed
-        articles={articles}
-        title="Latest articles"
-      />
+    <div className="flex flex-col gap-7">
+      <HeroBanner articleCount={articles.length} categoryCount={categoryCount} />
+      <ArticleFeed articles={articles} title="Latest articles" />
     </div>
   );
 }

@@ -35,9 +35,12 @@ export default function ArticleCard({
           isSpotlight && "border-primary/30 md:grid md:grid-cols-2",
         )}
       >
-        {variant !== "compact" && <ArticleCover article={article} className={cn(isSpotlight && "md:h-full md:aspect-auto")} />}
+        {variant !== "compact" && <ArticleCover
+            article={article}
+            className={isSpotlight ? "md:aspect-auto md:h-full" : "aspect-[2/1]"}
+          />}
 
-        <CardContent className={cn("flex h-full flex-col gap-3 p-5", isSpotlight && "p-6 sm:p-8")}>
+        <CardContent className={cn("flex h-full flex-col gap-2 p-4", isSpotlight && "gap-3 p-5 sm:p-6")}>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             {article.category && <Badge variant="secondary">{article.category}</Badge>}
             <ArticleMeta
@@ -46,17 +49,17 @@ export default function ArticleCard({
             />
           </div>
 
-          <h3 className={cn(isSpotlight ? "text-2xl sm:text-3xl" : "text-lg")}>
+          <h3 className={cn(isSpotlight ? "text-xl sm:text-2xl" : "text-base")}>
             {/* Stretched link makes the whole card the hit target. */}
             <Link href={href} className="after:absolute after:inset-0 after:content-['']">
               {article.title}
             </Link>
           </h3>
 
-          {excerpt && <p className="text-sm leading-relaxed text-muted-foreground">{excerpt}</p>}
+          {excerpt && <p className="line-clamp-3 text-sm leading-normal text-muted-foreground">{excerpt}</p>}
 
           {(article.tags || []).length > 0 && (
-            <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
+            <div className="mt-auto flex flex-wrap gap-1.5 pt-0.5">
               {(article.tags || []).slice(0, visibleTags).map((tag) => (
                 <Badge key={`${article.id}-${tag}`} variant="outline">
                   {tag}
