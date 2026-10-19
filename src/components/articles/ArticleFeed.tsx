@@ -12,13 +12,11 @@ import { Article } from "@/types/article";
 type ArticleFeedProps = {
   articles: Article[];
   title?: string;
-  subtitle?: string;
 };
 
 export default function ArticleFeed({
   articles,
   title = "Latest articles",
-  subtitle,
 }: ArticleFeedProps) {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -62,10 +60,35 @@ export default function ArticleFeed({
 
   return (
     <section className="flex flex-col gap-4" aria-labelledby="feed-title">
+      <div className="flex items-baseline justify-between gap-4">
+        <h2 id="feed-title">{title}</h2>
+        <p className="text-sm text-muted-foreground" aria-live="polite">
+          {filtered.length === articles.length
+            ? `${articles.length} ${articles.length === 1 ? "article" : "articles"}`
+            : `${filtered.length} of ${articles.length} match`}
+        </p>
+      </div>
+
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 id="feed-title">{title}</h2>
-          {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+        <div
+          className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0"
+          role="group"
+          aria-label="Categories"
+        >
+          {categories.map((category) => (
+            <Pressable key={category} className="shrink-0">
+              <Button
+                type="button"
+                size="sm"
+                variant={activeCategory === category ? "default" : "outline"}
+                aria-pressed={activeCategory === category}
+                className="rounded-full"
+                onClick={() => setActiveCategory(category)}
+              >
+                {category}
+              </Button>
+            </Pressable>
+          ))}
         </div>
 
         <SearchField
@@ -76,29 +99,6 @@ export default function ArticleFeed({
           className="md:max-w-xs"
         />
       </div>
-
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Categories">
-        {categories.map((category) => (
-          <Pressable key={category} className="shrink-0">
-            <Button
-              type="button"
-              size="sm"
-              variant={activeCategory === category ? "default" : "outline"}
-              aria-pressed={activeCategory === category}
-              className="rounded-full"
-              onClick={() => setActiveCategory(category)}
-            >
-              {category}
-            </Button>
-          </Pressable>
-        ))}
-      </div>
-
-      <p className="text-sm text-muted-foreground" aria-live="polite">
-        {filtered.length === articles.length
-          ? `${articles.length} ${articles.length === 1 ? "article" : "articles"}`
-          : `${filtered.length} of ${articles.length} articles match`}
-      </p>
 
       {!filtered.length ? (
         <EmptyState

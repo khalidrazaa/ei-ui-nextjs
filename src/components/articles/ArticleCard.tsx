@@ -32,15 +32,15 @@ export default function ArticleCard({
       <Card
         className={cn(
           "group relative h-full gap-0 overflow-hidden py-0 shadow-none transition-[box-shadow,border-color] duration-200 hover:border-primary/40 hover:shadow-md",
-          isSpotlight && "border-primary/30 md:grid md:grid-cols-2",
+          isSpotlight && "border-primary/30 md:grid md:grid-cols-5",
         )}
       >
         {variant !== "compact" && <ArticleCover
             article={article}
-            className={isSpotlight ? "md:aspect-auto md:h-full" : "aspect-[2/1]"}
+            className={isSpotlight ? "md:col-span-2 md:aspect-auto md:h-full md:min-h-48" : "aspect-[2/1]"}
           />}
 
-        <CardContent className={cn("flex h-full flex-col gap-2 p-4", isSpotlight && "gap-3 p-5 sm:p-6")}>
+        <CardContent className={cn("flex h-full flex-col gap-2 p-4", isSpotlight && "gap-3 p-5 sm:p-6 md:col-span-3 md:justify-center")}>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             {article.category && <Badge variant="secondary">{article.category}</Badge>}
             <ArticleMeta
