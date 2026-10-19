@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import ArticleCover from "@/components/articles/ArticleCover";
 import ArticleMeta from "@/components/common/ArticleMeta";
 import Pressable from "@/components/motion/Pressable";
 import { Badge } from "@/components/ui/badge";
@@ -31,9 +32,10 @@ export default function ArticleCard({
       <Card
         className={cn(
           "group relative h-full gap-0 overflow-hidden py-0 shadow-none transition-[box-shadow,border-color] duration-200 hover:border-primary/40 hover:shadow-md",
-          isSpotlight && "border-primary/30",
+          isSpotlight && "border-primary/30 md:grid md:grid-cols-2",
         )}
       >
+        {variant !== "compact" && <ArticleCover article={article} className={cn(isSpotlight && "md:h-full md:aspect-auto")} />}
 
         <CardContent className={cn("flex h-full flex-col gap-3 p-5", isSpotlight && "p-6 sm:p-8")}>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
