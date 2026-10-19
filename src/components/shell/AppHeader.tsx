@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { navItems } from "@/config/navigation";
+import BrandMark from "@/components/common/BrandMark";
+import Container from "@/components/common/Container";
 import ActivePill from "@/components/motion/ActivePill";
+import { navItems } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
@@ -15,17 +17,20 @@ export default function AppHeader() {
 
   return (
     <header className="glass sticky top-0 z-40 border-b border-border/80">
-      <div className="mx-auto flex h-[var(--header-height)] w-full max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+      <Container className="flex h-(--header-height) items-center justify-between gap-4">
         <Link
           href="/"
-          className="flex flex-col leading-none"
+          className="flex items-center gap-2.5"
           aria-label={`${siteConfig.brandName} home`}
         >
-          <span className="text-base font-semibold tracking-tight">{siteConfig.brandName}</span>
-          <span className="mt-1 text-xs text-muted-foreground">{siteConfig.tagline}</span>
+          <BrandMark />
+          <span className="flex items-baseline gap-2">
+            <span className="text-base font-semibold tracking-tight">{siteConfig.brandName}</span>
+            <span className="hidden text-xs text-muted-foreground lg:inline">{siteConfig.tagline}</span>
+          </span>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation">
+        <nav className="hidden items-center gap-0.5 md:flex" aria-label="Primary navigation">
           {navItems.map((item) => {
             const active = isActivePath(pathname, item.href);
 
@@ -35,7 +40,7 @@ export default function AppHeader() {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative isolate rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
+                  "relative isolate rounded-full px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
                   active && "text-accent-foreground hover:text-accent-foreground",
                 )}
               >
@@ -45,7 +50,7 @@ export default function AppHeader() {
             );
           })}
         </nav>
-      </div>
+      </Container>
     </header>
   );
 }
