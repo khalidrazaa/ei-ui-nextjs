@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import ArticleMeta from "@/components/common/ArticleMeta";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import Pressable from "@/components/motion/Pressable";
 import ArticleBody from "@/components/articles/ArticleBody";
 import CommentSection from "@/components/articles/CommentSection";
 import { siteConfig } from "@/config/site";
@@ -103,15 +104,17 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
           <ul className="grid gap-3 sm:grid-cols-2">
             {related.map((item) => (
               <li key={item.id}>
-                <Link
-                  href={articlePath(item)}
-                  className="flex h-full flex-col gap-1 rounded-xl border border-border bg-card p-4 transition-[transform,border-color] hover:border-primary/40 active:scale-[0.99]"
-                >
-                  <h3 className="text-base">{item.title}</h3>
-                  {item.excerpt && (
-                    <p className="line-clamp-2 text-sm text-muted-foreground">{item.excerpt}</p>
-                  )}
-                </Link>
+                <Pressable className="h-full">
+                  <Link
+                    href={articlePath(item)}
+                    className="flex h-full flex-col gap-1 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40"
+                  >
+                    <h3 className="text-base">{item.title}</h3>
+                    {item.excerpt && (
+                      <p className="line-clamp-2 text-sm text-muted-foreground">{item.excerpt}</p>
+                    )}
+                  </Link>
+                </Pressable>
               </li>
             ))}
           </ul>

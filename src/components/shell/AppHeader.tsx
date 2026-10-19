@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { navItems } from "@/config/navigation";
+import ActivePill from "@/components/motion/ActivePill";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
@@ -34,10 +35,11 @@ export default function AppHeader() {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground active:scale-[0.97]",
-                  active && "bg-accent text-accent-foreground hover:text-accent-foreground",
+                  "relative isolate rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
+                  active && "text-accent-foreground hover:text-accent-foreground",
                 )}
               >
+                {active && <ActivePill layoutId="header-nav-pill" />}
                 {item.label}
               </Link>
             );

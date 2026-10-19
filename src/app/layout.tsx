@@ -4,6 +4,7 @@ import { Inter, Source_Serif_4 } from "next/font/google";
 import AppFooter from "@/components/shell/AppFooter";
 import AppHeader from "@/components/shell/AppHeader";
 import ContactAttribution from "@/components/shell/ContactAttribution";
+import MotionProvider from "@/components/motion/MotionProvider";
 import MobileDock from "@/components/shell/MobileDock";
 import { siteConfig } from "@/config/site";
 
@@ -40,6 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${sourceSerif.variable}`}>
       <body className="flex min-h-dvh flex-col">
+        <MotionProvider>
         <ContactAttribution />
         <AppHeader />
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-10 pt-6 sm:px-6 md:pt-10">
@@ -47,6 +49,7 @@ export default function RootLayout({
         </main>
         <AppFooter />
         <MobileDock />
+        </MotionProvider>
       </body>
     </html>
   );

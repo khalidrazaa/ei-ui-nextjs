@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import ActivePill from "@/components/motion/ActivePill";
+import Pressable from "@/components/motion/Pressable";
 import { navItems } from "@/config/navigation";
 import { cn } from "@/lib/utils";
 
@@ -22,17 +24,22 @@ export default function MobileDock() {
 
           return (
             <li key={item.href} className="flex-1">
-              <Link
-                href={item.href}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "flex h-full flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground transition-[color,transform] duration-150 active:scale-95",
-                  active && "text-primary",
-                )}
-              >
-                <Icon className="size-5" aria-hidden="true" />
-                <span>{item.label}</span>
-              </Link>
+              <Pressable className="h-full">
+                <Link
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex h-full flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground transition-colors",
+                    active && "text-primary",
+                  )}
+                >
+                  <span className="relative isolate flex h-7 w-14 items-center justify-center">
+                    {active && <ActivePill layoutId="dock-nav-pill" />}
+                    <Icon className="size-5" aria-hidden="true" />
+                  </span>
+                  <span>{item.label}</span>
+                </Link>
+              </Pressable>
             </li>
           );
         })}

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import ArticleCard from "@/components/articles/ArticleCard";
 import EmptyState from "@/components/common/EmptyState";
+import Pressable from "@/components/motion/Pressable";
 import SearchField from "@/components/common/SearchField";
 import { Button } from "@/components/ui/button";
 import { Article } from "@/types/article";
@@ -78,17 +79,18 @@ export default function ArticleFeed({
 
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Categories">
         {categories.map((category) => (
-          <Button
-            key={category}
-            type="button"
-            size="sm"
-            variant={activeCategory === category ? "default" : "outline"}
-            aria-pressed={activeCategory === category}
-            className="shrink-0 rounded-full bg-clip-padding"
-            onClick={() => setActiveCategory(category)}
-          >
-            {category}
-          </Button>
+          <Pressable key={category} className="shrink-0">
+            <Button
+              type="button"
+              size="sm"
+              variant={activeCategory === category ? "default" : "outline"}
+              aria-pressed={activeCategory === category}
+              className="rounded-full"
+              onClick={() => setActiveCategory(category)}
+            >
+              {category}
+            </Button>
+          </Pressable>
         ))}
       </div>
 
