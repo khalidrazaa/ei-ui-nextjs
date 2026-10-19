@@ -46,6 +46,10 @@
   --success: #1f7a4d;
   --success-foreground: #ffffff;
 
+  /* Chrome (header and footer): the ink colour as a surface */
+  --chrome: #172236;
+  --chrome-foreground: #e9eef8;
+
   /* Page backdrop (original explainit gradient stops) */
   --page-glow: #f8fbff;
   --page-sky: #d4e4ff;
@@ -87,6 +91,8 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-chrome: var(--chrome);
+  --color-chrome-foreground: var(--chrome-foreground);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
