@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { Inter, Source_Serif_4 } from "next/font/google";
 
 import AppFooter from "@/components/shell/AppFooter";
 import AppHeader from "@/components/shell/AppHeader";
@@ -7,6 +8,13 @@ import MobileDock from "@/components/shell/MobileDock";
 import { siteConfig } from "@/config/site";
 
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const sourceSerif = Source_Serif_4({
+  subsets: ["latin"],
+  variable: "--font-source-serif",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(`https://${siteConfig.domain}`),
@@ -20,19 +28,23 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: siteConfig.themeColor,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="app-body">
+    <html lang="en" className={`${inter.variable} ${sourceSerif.variable}`}>
+      <body className="flex min-h-dvh flex-col">
         <ContactAttribution />
-        <div className="bg-orb bg-orb-one" aria-hidden />
-        <div className="bg-orb bg-orb-two" aria-hidden />
         <AppHeader />
-        <main className="app-shell app-main">{children}</main>
+        <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-10 pt-6 sm:px-6 md:pt-10">
+          {children}
+        </main>
         <AppFooter />
         <MobileDock />
       </body>

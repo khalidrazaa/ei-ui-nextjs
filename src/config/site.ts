@@ -4,10 +4,12 @@ export type SiteConfig = {
   hostSite: string;
   description: string;
   tagline: string;
-  heroLabel: string;
-  heroHighlight: string;
-  aboutSummary: string;
-  navItems: Array<{ href: string; label: string }>;
+  footerTagline: string;
+  contactEmail: string;
+  /** Mirrors the --background token in globals.css (browser UI colour). */
+  themeColor: string;
+  socialLinks: Array<{ href: string; label: string }>;
+  enquiries: string[];
 };
 
 export const siteConfig: SiteConfig = {
@@ -17,14 +19,18 @@ export const siteConfig: SiteConfig = {
   description:
     "explainit turns fast-moving technology shifts into clear, practical stories for real people.",
   tagline: "Technology made readable",
-  heroLabel: "Daily Tech Brief",
-  heroHighlight: "Medium depth, LinkedIn clarity",
-  aboutSummary:
-    "explainit publishes mobile-first explainers, analysis, and trend breakdowns so you can understand what matters without digging through technical noise.",
-  navItems: [
-    { href: "/", label: "Home" },
-    { href: "/articles", label: "Articles" },
-    { href: "/about", label: "About" },
-    { href: "/contact", label: "Contact" },
+  footerTagline: "Practical explanations for data, analytics and technology.",
+  contactEmail: "core@explainit.tech",
+  themeColor: "#e9eef8",
+  socialLinks: [
+    { href: "https://www.linkedin.com/in/khalidrazaa/", label: "LinkedIn" },
+    { href: "https://github.com/khalidrazaa", label: "GitHub" },
+  ],
+  enquiries: [
+    "Article ideas or feedback",
+    "Data and analytics projects",
+    "Dashboard and reporting automation",
+    "Collaboration",
+    "General enquiries",
   ],
 };

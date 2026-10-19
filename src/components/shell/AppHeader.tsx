@@ -3,29 +3,40 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { navItems } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
+import { cn } from "@/lib/utils";
+
+import { isActivePath } from "./nav";
 
 export default function AppHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="app-header">
-      <div className="app-shell app-header-inner">
-        <Link href="/" className="brand-block" aria-label={`${siteConfig.brandName} home`}>
-          <span className="brand-title">{siteConfig.brandName}</span>
-          <span className="brand-subtitle">{siteConfig.tagline}</span>
+    <header className="glass sticky top-0 z-40 border-b border-border/80">
+      <div className="mx-auto flex h-[var(--header-height)] w-full max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+        <Link
+          href="/"
+          className="flex flex-col leading-none"
+          aria-label={`${siteConfig.brandName} home`}
+        >
+          <span className="text-base font-semibold tracking-tight">{siteConfig.brandName}</span>
+          <span className="mt-1 text-xs text-muted-foreground">{siteConfig.tagline}</span>
         </Link>
 
-        <nav className="desktop-nav" aria-label="Primary navigation">
-          {siteConfig.navItems.map((item) => {
-            const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation">
+          {navItems.map((item) => {
+            const active = isActivePath(pathname, item.href);
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                style={active ? { background: "var(--accent-soft)", color: "var(--accent)" } : undefined}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground active:scale-[0.97]",
+                  active && "bg-accent text-accent-foreground hover:text-accent-foreground",
+                )}
               >
                 {item.label}
               </Link>
