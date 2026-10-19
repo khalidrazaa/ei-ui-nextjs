@@ -6,12 +6,11 @@ export default async function HomePage() {
   const { articles } = await getPublishedArticles(120);
 
   return (
-    <div className="page-stack">
+    <div className="flex flex-col gap-10">
       <HeroBanner articleCount={articles.length} />
       <ArticleFeed
         articles={articles}
-        title="Latest Articles"
-        subtitle="Browse the latest published stories."
+        title="Latest articles"
       />
     </div>
   );

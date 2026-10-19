@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react";
 
-import { Article } from "@/types/article";
-
 import ArticleCard from "@/components/articles/ArticleCard";
+import EmptyState from "@/components/common/EmptyState";
+import SearchField from "@/components/common/SearchField";
+import { Button } from "@/components/ui/button";
+import { Article } from "@/types/article";
 
 type ArticleFeedProps = {
   articles: Article[];
@@ -14,8 +16,8 @@ type ArticleFeedProps = {
 
 export default function ArticleFeed({
   articles,
-  title = "Latest Stories",
-  subtitle = "Swipe-friendly deep reads designed for phones and tablets.",
+  title = "Latest articles",
+  subtitle,
 }: ArticleFeedProps) {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -33,8 +35,7 @@ export default function ArticleFeed({
     const normalizedQuery = query.trim().toLowerCase();
 
     return articles.filter((article) => {
-      const inCategory = activeCategory === "All" || article.category === activeCategory;
-      if (!inCategory) {
+      if (activeCategory !== "All" && article.category !== activeCategory) {
         return false;
       }
 
@@ -56,77 +57,63 @@ export default function ArticleFeed({
   }, [activeCategory, articles, query]);
 
   const lead = filtered[0];
-  const featuredRail = filtered.slice(1, 3);
-  const remaining = filtered.slice(3);
-  const gridArticles = lead ? remaining : filtered;
-  const countLabel =
-    filtered.length === articles.length
-      ? `${articles.length} stories currently published`
-      : `${filtered.length} stories match this view`;
+  const rest = filtered.slice(1);
 
   return (
-    <section className="feed-section">
-      <div className="feed-head">
-        <div className="feed-head-copy">
-          <h2>{title}</h2>
-          <p>{subtitle}</p>
-          <p className="feed-count">{countLabel}</p>
+    <section className="flex flex-col gap-6" aria-labelledby="feed-title">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h2 id="feed-title">{title}</h2>
+          {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
         </div>
 
-        <label className="search-wrap">
-          <span className="search-label">Search</span>
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search story, topic, tag"
-            aria-label="Search stories"
-          />
-        </label>
+        <SearchField
+          label="Search articles"
+          placeholder="Search articles"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          className="md:max-w-xs"
+        />
       </div>
 
-      <div className="chip-row" aria-label="Categories">
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Categories">
         {categories.map((category) => (
-          <button
+          <Button
             key={category}
             type="button"
-            className={`chip-button ${activeCategory === category ? "chip-button-active" : ""}`}
+            size="sm"
+            variant={activeCategory === category ? "default" : "outline"}
+            aria-pressed={activeCategory === category}
+            className="shrink-0 rounded-full bg-clip-padding"
             onClick={() => setActiveCategory(category)}
           >
             {category}
-          </button>
+          </Button>
         ))}
       </div>
 
-
+      <p className="text-sm text-muted-foreground" aria-live="polite">
+        {filtered.length === articles.length
+          ? `${articles.length} ${articles.length === 1 ? "article" : "articles"}`
+          : `${filtered.length} of ${articles.length} articles match`}
+      </p>
 
       {!filtered.length ? (
-        <div className="empty-state">
-          <h3>{articles.length ? "No articles match this filter" : "No articles published yet"}</h3>
-          {articles.length > 0 && <p>Try another keyword or switch category.</p>}
-        </div>
+        <EmptyState
+          title={articles.length ? "No articles match this filter" : "No articles published yet"}
+          description={articles.length ? "Try another keyword or category." : undefined}
+        />
       ) : (
-        <>
-          {lead && (
-            <div className="feed-featured">
-              <ArticleCard article={lead} priority variant="spotlight" />
-
-              {!!featuredRail.length && (
-                <div className="feed-featured-rail">
-                  {featuredRail.map((article) => (
-                    <ArticleCard key={article.id} article={article} variant="compact" />
-                  ))}
-                </div>
-              )}
+        <div className="flex flex-col gap-4">
+          {lead && <ArticleCard article={lead} priority variant="spotlight" />}
+          {rest.length > 0 && (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {rest.map((article) => (
+                <ArticleCard key={article.id} article={article} />
+              ))}
             </div>
           )}
-
-          <div className="feed-grid">
-            {gridArticles.map((article) => (
-              <ArticleCard key={article.id} article={article} />
-            ))}
-          </div>
-        </>
+        </div>
       )}
     </section>
   );
