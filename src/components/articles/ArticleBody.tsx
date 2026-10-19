@@ -1,5 +1,7 @@
 import React from "react";
 
+import { createHeadingIds, plainText } from "@/lib/headings";
+
 type Block =
   | { type: "h1" | "h2" | "h3" | "p"; text: string }
   | { type: "quote"; text: string }
@@ -110,6 +112,7 @@ type ArticleBodyProps = {
 export default function ArticleBody({ content, title }: ArticleBodyProps) {
   const parsed = parseMarkdownBlocks(content);
   const first = parsed[0];
+  const nextId = createHeadingIds();
   const blocks =
     title && first?.type === "h1" && first.text.trim().toLowerCase() === title.trim().toLowerCase()
       ? parsed.slice(1)
@@ -122,10 +125,18 @@ export default function ArticleBody({ content, title }: ArticleBodyProps) {
           return <h1 key={`h1-${index}`}>{renderInline(block.text)}</h1>;
         }
         if (block.type === "h2") {
-          return <h2 key={`h2-${index}`}>{renderInline(block.text)}</h2>;
+          return (
+            <h2 key={`h2-${index}`} id={nextId(plainText(block.text))}>
+              {renderInline(block.text)}
+            </h2>
+          );
         }
         if (block.type === "h3") {
-          return <h3 key={`h3-${index}`}>{renderInline(block.text)}</h3>;
+          return (
+            <h3 key={`h3-${index}`} id={nextId(plainText(block.text))}>
+              {renderInline(block.text)}
+            </h3>
+          );
         }
         if (block.type === "quote") {
           return <blockquote key={`quote-${index}`}>{renderInline(block.text)}</blockquote>;

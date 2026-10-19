@@ -234,8 +234,12 @@ export default function ArticleLibrary({ articles, children }: ArticleLibraryPro
     </nav>
   );
 
+  if (isReadingArticle) {
+    return <div className="min-w-0">{children}</div>;
+  }
+
   return (
-    <div className="grid gap-8 lg:grid-cols-[14rem_minmax(0,1fr)]">
+    <div className="grid gap-6 lg:grid-cols-[12rem_minmax(0,1fr)]">
       <aside className="hidden lg:block">
         <div className="sticky top-[calc(var(--header-height)+1.5rem)] flex flex-col gap-3">
           <p className="px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">

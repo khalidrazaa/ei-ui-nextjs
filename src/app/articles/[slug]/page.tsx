@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import ArticleMeta from "@/components/common/ArticleMeta";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import Pressable from "@/components/motion/Pressable";
 import ArticleBody from "@/components/articles/ArticleBody";
+import ArticleCard from "@/components/articles/ArticleCard";
+import ArticleCover from "@/components/articles/ArticleCover";
+import ReadingProgress from "@/components/articles/ReadingProgress";
+import TableOfContents from "@/components/articles/TableOfContents";
+import Breadcrumbs, { type Crumb } from "@/components/common/Breadcrumbs";
+import CopyLinkButton from "@/components/common/CopyLinkButton";
 import CommentSection from "@/components/articles/CommentSection";
 import { siteConfig } from "@/config/site";
 import { getArticleBySlug, getCommentsForSlug, getRelatedArticles } from "@/lib/articles";
-import { articlePath, formatDate, formatReadingTime } from "@/lib/format";
+import { formatDate, formatReadingTime } from "@/lib/format";
+import { extractHeadings } from "@/lib/headings";
 
 type ArticlePageProps = {
   params: Promise<{ slug: string }>;
@@ -50,76 +54,83 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
     getCommentsForSlug(slug),
     getRelatedArticles(slug, 4),
   ]);
+  const headings = article.content ? extractHeadings(article.content) : [];
+  const published = formatDate(article.published_at || article.created_at);
+  const crumbs: Crumb[] = [
+    { label: "Articles", href: "/articles" },
+    ...(article.category ? [{ label: article.category }] : []),
+    { label: article.title },
+  ];
+
   return (
-    <article className="mx-auto flex max-w-2xl flex-col gap-8">
-      <header className="flex flex-col gap-4">
-        {(article.category || article.subcategory) && (
-          <p className="text-sm font-medium text-primary">
-            {[article.category, article.subcategory].filter(Boolean).join(" › ")}
-          </p>
-        )}
+    <>
+      <ReadingProgress />
 
-        <h1 className="text-balance text-4xl sm:text-5xl">{article.title}</h1>
-        {(article.excerpt || article.meta_description) && (
-          <p className="text-lg text-muted-foreground">{article.excerpt || article.meta_description}</p>
-        )}
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_13rem]">
+        <article className="flex min-w-0 max-w-2xl flex-col gap-6">
+          <header className="flex flex-col gap-3">
+            <Breadcrumbs items={crumbs} />
 
-        <ArticleMeta
-          className="text-sm text-muted-foreground"
-          date={formatDate(article.published_at || article.created_at)}
-          readingTime={formatReadingTime(article.reading_time)}
-        />
-      </header>
+            <div className="flex flex-wrap items-center gap-2">
+              {article.category && <Badge variant="secondary">{article.category}</Badge>}
+              {article.subcategory && <Badge variant="outline">{article.subcategory}</Badge>}
+            </div>
 
-      {article.featured_image_url && (
-        <Image
-          src={article.featured_image_url}
-          alt={article.image_alt_text || article.title}
-          width={1200}
-          height={680}
-          className="w-full rounded-xl border border-border object-cover"
-          unoptimized
-        />
-      )}
+            <h1 className="text-balance text-3xl sm:text-4xl">{article.title}</h1>
+            {(article.excerpt || article.meta_description) && (
+              <p className="text-base text-muted-foreground sm:text-lg">
+                {article.excerpt || article.meta_description}
+              </p>
+            )}
 
-      {article.content && <ArticleBody content={article.content} title={article.title} />}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-y border-border py-2.5">
+              <ArticleMeta
+                className="text-sm text-muted-foreground"
+                date={published}
+                readingTime={formatReadingTime(article.reading_time)}
+              />
+              <CopyLinkButton />
+            </div>
+          </header>
 
-      {(article.tags || []).length > 0 && (
-        <ul className="flex flex-wrap gap-2" aria-label="Tags">
-          {(article.tags || []).map((tag) => (
-            <li key={`${article.id}-${tag}`}>
-              <Badge variant="secondary">{tag}</Badge>
-            </li>
-          ))}
-        </ul>
-      )}
+          <ArticleCover article={article} className="aspect-[3/1] rounded-xl border border-border" />
 
-      <Separator />
+          {article.content && <ArticleBody content={article.content} title={article.title} />}
 
-      <CommentSection key={slug} slug={slug} initialComments={comments} />
+          {(article.tags || []).length > 0 && (
+            <ul className="flex flex-wrap gap-1.5" aria-label="Tags">
+              {(article.tags || []).map((tag) => (
+                <li key={`${article.id}-${tag}`}>
+                  <Badge variant="secondary">{tag}</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <Separator />
+
+          <CommentSection key={slug} slug={slug} initialComments={comments} />
+        </article>
+
+        <aside className="hidden lg:block">
+          <div className="sticky top-[calc(var(--header-height)+1.25rem)]">
+            <TableOfContents headings={headings} />
+          </div>
+        </aside>
+      </div>
 
       {related.length > 0 && (
-        <section className="flex flex-col gap-4" aria-labelledby="related-title">
+        <section className="mt-10 flex flex-col gap-3" aria-labelledby="related-title">
           <h2 id="related-title">Related reads</h2>
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {related.map((item) => (
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {related.slice(0, 3).map((item) => (
               <li key={item.id}>
-                <Pressable className="h-full">
-                  <Link
-                    href={articlePath(item)}
-                    className="flex h-full flex-col gap-1 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40"
-                  >
-                    <h3 className="text-base">{item.title}</h3>
-                    {item.excerpt && (
-                      <p className="line-clamp-2 text-sm text-muted-foreground">{item.excerpt}</p>
-                    )}
-                  </Link>
-                </Pressable>
+                <ArticleCard article={item} />
               </li>
             ))}
           </ul>
         </section>
       )}
-    </article>
+    </>
   );
 }
