@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   description: `Published stories on ${siteConfig.brandName}`,
 };
 
+/** The visible heading and list are rendered by ArticleLibrary in the segment layout. */
 export default function ArticlesPage() {
-  return <h1 className="sr-only">Articles</h1>;
+  return null;
 }
