@@ -103,10 +103,17 @@ function parseMarkdownBlocks(markdown: string): Block[] {
 
 type ArticleBodyProps = {
   content: string;
+  /** When set, a leading heading identical to the title is dropped (the page header already shows it). */
+  title?: string;
 };
 
-export default function ArticleBody({ content }: ArticleBodyProps) {
-  const blocks = parseMarkdownBlocks(content);
+export default function ArticleBody({ content, title }: ArticleBodyProps) {
+  const parsed = parseMarkdownBlocks(content);
+  const first = parsed[0];
+  const blocks =
+    title && first?.type === "h1" && first.text.trim().toLowerCase() === title.trim().toLowerCase()
+      ? parsed.slice(1)
+      : parsed;
 
   return (
     <div className="article-prose">

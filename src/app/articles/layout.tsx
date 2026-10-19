@@ -7,7 +7,7 @@ export default async function ArticlesLayout({ children }: { children: ReactNode
   const { articles } = await getPublishedArticles(200);
 
   return (
-    <div className="page-stack page-fill articles-index-page">
+    <div className="flex flex-col">
       <ArticleLibrary articles={articles}>{children}</ArticleLibrary>
     </div>
   );

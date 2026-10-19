@@ -3,6 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import ArticleMeta from "@/components/common/ArticleMeta";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import ArticleBody from "@/components/articles/ArticleBody";
 import CommentSection from "@/components/articles/CommentSection";
 import { siteConfig } from "@/config/site";
@@ -47,62 +50,71 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
     getRelatedArticles(slug, 4),
   ]);
   return (
-    <article>
-      <header className="article-header">
+    <article className="mx-auto flex max-w-2xl flex-col gap-8">
+      <header className="flex flex-col gap-4">
         {(article.category || article.subcategory) && (
-          <p className="article-trail">
-            {[article.category, article.subcategory].filter(Boolean).join(" > ")}
+          <p className="text-sm font-medium text-primary">
+            {[article.category, article.subcategory].filter(Boolean).join(" › ")}
           </p>
         )}
 
-        <h1>{article.title}</h1>
-        <p>{article.excerpt || article.meta_description}</p>
+        <h1 className="text-balance text-4xl sm:text-5xl">{article.title}</h1>
+        {(article.excerpt || article.meta_description) && (
+          <p className="text-lg text-muted-foreground">{article.excerpt || article.meta_description}</p>
+        )}
 
-        <div className="article-header-meta">
-          <span>{formatDate(article.published_at || article.created_at)}</span>
-          {article.reading_time && (article.published_at || article.created_at) ? <span aria-hidden>|</span> : null}
-          <span>{formatReadingTime(article.reading_time)}</span>
-        </div>
+        <ArticleMeta
+          className="text-sm text-muted-foreground"
+          date={formatDate(article.published_at || article.created_at)}
+          readingTime={formatReadingTime(article.reading_time)}
+        />
       </header>
 
       {article.featured_image_url && (
-        <section className="article-cover">
-          <Image
-            src={article.featured_image_url}
-            alt={article.image_alt_text || article.title}
-            width={1200}
-            height={680}
-            className="article-cover-image"
-            unoptimized
-          />
-        </section>
+        <Image
+          src={article.featured_image_url}
+          alt={article.image_alt_text || article.title}
+          width={1200}
+          height={680}
+          className="w-full rounded-xl border border-border object-cover"
+          unoptimized
+        />
       )}
 
-      {article.content && <ArticleBody content={article.content} />}
+      {article.content && <ArticleBody content={article.content} title={article.title} />}
 
       {(article.tags || []).length > 0 && (
-        <section className="tag-row">
+        <ul className="flex flex-wrap gap-2" aria-label="Tags">
           {(article.tags || []).map((tag) => (
-            <span key={`${article.id}-${tag}`} className="chip chip-soft">
-              {tag}
-            </span>
+            <li key={`${article.id}-${tag}`}>
+              <Badge variant="secondary">{tag}</Badge>
+            </li>
           ))}
-        </section>
+        </ul>
       )}
+
+      <Separator />
 
       <CommentSection key={slug} slug={slug} initialComments={comments} />
 
       {related.length > 0 && (
-        <section className="related-wrap">
-          <h2>Related Reads</h2>
-          <div className="related-list">
+        <section className="flex flex-col gap-4" aria-labelledby="related-title">
+          <h2 id="related-title">Related reads</h2>
+          <ul className="grid gap-3 sm:grid-cols-2">
             {related.map((item) => (
-              <Link key={item.id} href={articlePath(item)}>
-                <h3>{item.title}</h3>
-                <p>{item.excerpt}</p>
-              </Link>
+              <li key={item.id}>
+                <Link
+                  href={articlePath(item)}
+                  className="flex h-full flex-col gap-1 rounded-xl border border-border bg-card p-4 transition-[transform,border-color] hover:border-primary/40 active:scale-[0.99]"
+                >
+                  <h3 className="text-base">{item.title}</h3>
+                  {item.excerpt && (
+                    <p className="line-clamp-2 text-sm text-muted-foreground">{item.excerpt}</p>
+                  )}
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
       )}
     </article>
