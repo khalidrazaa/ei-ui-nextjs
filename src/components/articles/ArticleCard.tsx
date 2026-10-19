@@ -42,6 +42,7 @@ export default function ArticleCard({
 
         <CardContent className={cn("flex h-full flex-col gap-2 p-4", isSpotlight && "gap-3 p-5 sm:p-6 md:col-span-3 md:justify-center")}>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            {isSpotlight && <Badge variant="default">Featured</Badge>}
             {article.category && <Badge variant="secondary">{article.category}</Badge>}
             <ArticleMeta
               date={formatDate(article.published_at || article.created_at)}

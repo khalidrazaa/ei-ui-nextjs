@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import StatTile from "@/components/common/StatTile";
 import { Button } from "@/components/ui/button";
@@ -13,16 +13,10 @@ type HeroBannerProps = {
 export default function HeroBanner({ articleCount, categoryCount }: HeroBannerProps) {
   return (
     <section
-      className="relative overflow-hidden rounded-2xl bg-linear-to-br from-primary to-primary/75 px-6 py-8 text-primary-foreground sm:px-10 sm:py-10"
+      className="rounded-2xl bg-linear-to-br from-primary to-primary/80 px-6 py-7 text-primary-foreground sm:px-10 sm:py-9"
       aria-labelledby="hero-title"
     >
-      <BookOpen
-        className="pointer-events-none absolute -bottom-10 -right-6 size-64 text-primary-foreground/10"
-        strokeWidth={1}
-        aria-hidden="true"
-      />
-
-      <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div className="flex max-w-xl flex-col items-start gap-3">
           <p className="text-xs font-medium uppercase tracking-wide text-primary-foreground/80">
             {siteConfig.domain}

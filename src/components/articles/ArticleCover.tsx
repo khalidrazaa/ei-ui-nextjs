@@ -45,14 +45,14 @@ export default function ArticleCover({ article, className, compact = false }: Ar
     <div className={cn(frame, gradient)} role="img" aria-label={article.image_alt_text || article.title}>
       <BookOpen
         className={cn(
-          "absolute -bottom-3 -right-3 text-primary-foreground/25",
+          "absolute -bottom-3 -right-3 text-primary/20",
           compact ? "size-14" : "size-24",
         )}
         strokeWidth={1.25}
         aria-hidden="true"
       />
       {!compact && article.category && (
-        <span className="absolute bottom-3 left-4 text-sm font-semibold text-primary-foreground">
+        <span className="absolute bottom-3 left-4 text-sm font-semibold text-primary">
           {article.category}
         </span>
       )}
