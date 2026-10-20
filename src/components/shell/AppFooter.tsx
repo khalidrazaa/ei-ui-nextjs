@@ -17,7 +17,7 @@ type FooterLinkProps = {
 
 function FooterLink({ href, children, icon: Icon, external, label }: FooterLinkProps) {
   const className =
-    "inline-flex h-7 items-center gap-2 text-sm text-chrome-foreground/75 transition-colors hover:text-chrome-foreground";
+    "inline-flex h-7 items-center gap-2 text-sm text-foreground/80 transition-colors hover:text-primary";
   const content = (
     <>
       {Icon && <Icon className="size-4 shrink-0" aria-hidden="true" />}
@@ -39,7 +39,7 @@ function FooterLink({ href, children, icon: Icon, external, label }: FooterLinkP
 function FooterColumn({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <nav aria-label={title}>
-      <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-chrome-foreground/60">{title}</h2>
+      <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</h2>
       <ul className="flex flex-col">{children}</ul>
     </nav>
   );
@@ -49,12 +49,12 @@ export default function AppFooter() {
   const { footerCta } = siteConfig;
 
   return (
-    <footer className="bg-chrome text-chrome-foreground pb-[calc(var(--dock-height)+env(safe-area-inset-bottom))] md:pb-0">
+    <footer className="border-t border-border bg-card/70 pb-[calc(var(--dock-height)+env(safe-area-inset-bottom))] md:pb-0">
       <Container className="pt-8">
-        <div className="flex flex-col gap-4 rounded-xl border border-chrome-foreground/15 bg-chrome-foreground/5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-accent/60 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div>
             <h2 className="text-lg">{footerCta.title}</h2>
-            <p className="mt-1 text-sm text-chrome-foreground/70">{footerCta.description}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{footerCta.description}</p>
           </div>
           {ctaNavItem && (
             <Button asChild variant="warm" className="self-start sm:self-auto">
@@ -70,7 +70,7 @@ export default function AppFooter() {
             <BrandMark className="size-8" />
             <span className="text-base font-semibold tracking-tight">{siteConfig.brandName}</span>
           </Link>
-          <p className="text-sm text-chrome-foreground/70">{siteConfig.footerTagline}</p>
+          <p className="text-sm text-muted-foreground">{siteConfig.footerTagline}</p>
         </div>
 
         <FooterColumn title="Explore">
@@ -104,14 +104,14 @@ export default function AppFooter() {
         </FooterColumn>
       </Container>
 
-      <div className="border-t border-chrome-foreground/10">
-        <Container className="flex items-center justify-between gap-4 py-3 text-xs text-chrome-foreground/60">
+      <div className="border-t border-border">
+        <Container className="flex items-center justify-between gap-4 py-3 text-xs text-muted-foreground">
           <p>
             © {new Date().getFullYear()} {siteConfig.brandName}. All rights reserved.
           </p>
           <a
             href="#top"
-            className="inline-flex items-center gap-1 transition-colors hover:text-chrome-foreground"
+            className="inline-flex items-center gap-1 transition-colors hover:text-foreground"
           >
             Back to top
             <ArrowUp className="size-3" aria-hidden="true" />
