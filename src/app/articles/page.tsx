@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import ActiveFilters from "@/components/articles/ActiveFilters";
 import ArticleCard from "@/components/articles/ArticleCard";
-import CategoryNav from "@/components/articles/CategoryNav";
+import { CategoryChips, CategorySidebar } from "@/components/articles/CategoryNav";
 import EmptyState from "@/components/common/EmptyState";
 import Pagination from "@/components/common/Pagination";
 import SearchField from "@/components/common/SearchField";
@@ -43,17 +43,19 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
   const last = first + results.items.length - (results.total === 0 ? 0 : 1);
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-1">
-        <h1>Articles</h1>
-        <p className="text-muted-foreground">
-          {articles.length} {articles.length === 1 ? "article" : "articles"} across {groups.length}{" "}
-          {groups.length === 1 ? "topic" : "topics"}.
-        </p>
-      </header>
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-10">
+      <CategorySidebar groups={groups} total={articles.length} query={query} />
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-10">
-        <CategoryNav groups={groups} total={articles.length} query={query} />
+      <div className="flex min-w-0 flex-col gap-5">
+        <header className="flex flex-col gap-1">
+          <h1>Articles</h1>
+          <p className="text-muted-foreground">
+            {articles.length} {articles.length === 1 ? "article" : "articles"} across {groups.length}{" "}
+            {groups.length === 1 ? "topic" : "topics"}.
+          </p>
+        </header>
+
+        <CategoryChips groups={groups} total={articles.length} query={query} />
 
         <section className="flex min-w-0 flex-col gap-5" aria-label="Article results">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

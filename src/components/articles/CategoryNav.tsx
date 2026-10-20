@@ -21,7 +21,18 @@ const rowClass =
   "flex items-center rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-accent/60";
 
 /** Desktop sidebar; the active category expands to show its subcategories. */
-function Sidebar({ groups, total, query }: CategoryNavProps) {
+export function CategorySidebar({ groups, total, query }: CategoryNavProps) {
+  return (
+    <aside className="hidden lg:block">
+      <div className="sticky top-[calc(var(--header-height)+1.25rem)] flex flex-col gap-2">
+        <p className="px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Categories</p>
+        <SidebarList groups={groups} total={total} query={query} />
+      </div>
+    </aside>
+  );
+}
+
+function SidebarList({ groups, total, query }: CategoryNavProps) {
   return (
     <nav aria-label="Categories" className="flex flex-col gap-0.5">
       <Link
@@ -87,11 +98,11 @@ const chipClass =
 const chipActiveClass = "border-primary bg-primary text-primary-foreground hover:bg-primary";
 
 /** Mobile: scrollable category chips, plus subcategory chips when one is active. */
-function Chips({ groups, query }: CategoryNavProps) {
+export function CategoryChips({ groups, query }: CategoryNavProps) {
   const active = groups.find((group) => group.category === query.category);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-2 lg:hidden">
       <nav aria-label="Categories" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
         <Link href={hrefFor(query, null)} className={cn(chipClass, !query.category && chipActiveClass)}>
           All
@@ -128,18 +139,3 @@ function Chips({ groups, query }: CategoryNavProps) {
   );
 }
 
-export default function CategoryNav(props: CategoryNavProps) {
-  return (
-    <>
-      <aside className="hidden lg:block">
-        <div className="sticky top-[calc(var(--header-height)+1.25rem)] flex flex-col gap-2">
-          <p className="px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Categories</p>
-          <Sidebar {...props} />
-        </div>
-      </aside>
-      <div className="min-w-0 lg:hidden">
-        <Chips {...props} />
-      </div>
-    </>
-  );
-}
