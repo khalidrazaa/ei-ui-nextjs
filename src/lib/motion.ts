@@ -13,3 +13,6 @@ export const springs = {
 
 /** Scale applied while an element is pressed. */
 export const PRESS_SCALE = 0.97;
+
+/** Delay between slides in autoplaying carousels. */
+export const CAROUSEL_AUTOPLAY_MS = 6000;

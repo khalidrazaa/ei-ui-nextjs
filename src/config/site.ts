@@ -13,6 +13,7 @@ export type SiteConfig = {
   socialLinks: Array<{ href: string; label: string; icon: LucideIcon }>;
   enquiries: string[];
   footerCta: { title: string; description: string; label: string };
+  author: { name: string; bio: string };
 };
 
 export const siteConfig: SiteConfig = {
@@ -33,6 +34,10 @@ export const siteConfig: SiteConfig = {
     title: "Have a question or an idea?",
     description: "Reach out about articles, projects or collaboration.",
     label: "Get in touch",
+  },
+  author: {
+    name: "Khalid Raza",
+    bio: "A technology professional working across data, analytics, software and automation, sharing practical ideas and lessons from real-world projects.",
   },
   enquiries: [
     "Article ideas or feedback",

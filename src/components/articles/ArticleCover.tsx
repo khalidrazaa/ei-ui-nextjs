@@ -1,26 +1,17 @@
 import Image from "next/image";
-import { BookOpen } from "lucide-react";
 
-import { coverGradients } from "@/config/cover";
+import CoverArt, { coverThemeFor } from "@/components/articles/CoverArt";
 import { cn } from "@/lib/utils";
 import { Article } from "@/types/article";
 
 type ArticleCoverProps = {
   article: Pick<Article, "slug" | "title" | "category" | "featured_image_url" | "image_alt_text">;
   className?: string;
-  /** Small thumbnail: no category label, smaller artwork. */
+  /** Small thumbnail: no category label. */
   compact?: boolean;
 };
 
-/** Stable index so an article always gets the same fallback gradient. */
-function hashIndex(value: string, size: number): number {
-  let hash = 0;
-  for (let index = 0; index < value.length; index += 1) {
-    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
-  }
-  return hash % size;
-}
-
+/** Featured image when present, otherwise generated artwork from the palette. */
 export default function ArticleCover({ article, className, compact = false }: ArticleCoverProps) {
   const frame = cn("relative aspect-video w-full overflow-hidden", className);
 
@@ -39,20 +30,14 @@ export default function ArticleCover({ article, className, compact = false }: Ar
     );
   }
 
-  const gradient = coverGradients[hashIndex(article.slug || article.title, coverGradients.length)];
+  const seed = article.slug || article.title;
+  const theme = coverThemeFor(seed);
 
   return (
-    <div className={cn(frame, gradient)} role="img" aria-label={article.image_alt_text || article.title}>
-      <BookOpen
-        className={cn(
-          "absolute -bottom-3 -right-3 text-primary/20",
-          compact ? "size-14" : "size-24",
-        )}
-        strokeWidth={1.25}
-        aria-hidden="true"
-      />
+    <div className={cn(frame, theme.surface)} role="img" aria-label={article.image_alt_text || article.title}>
+      <CoverArt seed={seed} />
       {!compact && article.category && (
-        <span className="absolute bottom-3 left-4 text-sm font-semibold text-primary">
+        <span className="absolute bottom-3 left-3 rounded-full bg-card/95 px-2.5 py-0.5 text-xs font-medium text-foreground shadow-sm">
           {article.category}
         </span>
       )}
