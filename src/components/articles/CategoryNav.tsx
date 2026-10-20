@@ -20,19 +20,8 @@ function Count({ value }: { value: number }) {
 const rowClass =
   "flex items-center rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-accent/60";
 
-/** Desktop sidebar; the active category expands to show its subcategories. */
-export function CategorySidebar({ groups, total, query }: CategoryNavProps) {
-  return (
-    <aside className="hidden lg:block">
-      <div className="sticky top-[calc(var(--header-height)+1.25rem)] flex flex-col gap-2">
-        <p className="px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Categories</p>
-        <SidebarList groups={groups} total={total} query={query} />
-      </div>
-    </aside>
-  );
-}
-
-function SidebarList({ groups, total, query }: CategoryNavProps) {
+/** Category list; the active category expands to show its subcategories. */
+export function CategoryList({ groups, total, query }: CategoryNavProps) {
   return (
     <nav aria-label="Categories" className="flex flex-col gap-0.5">
       <Link
