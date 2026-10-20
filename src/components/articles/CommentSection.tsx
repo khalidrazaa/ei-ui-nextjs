@@ -2,6 +2,10 @@
 
 import { FormEvent, useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import FormField from "@/components/common/FormField";
+import { Textarea } from "@/components/ui/textarea";
 import { ArticleComment } from "@/types/article";
 import { formatDate } from "@/lib/format";
 
@@ -63,50 +67,68 @@ export default function CommentSection({ slug, initialComments }: CommentSection
   }
 
   return (
-    <section className="comment-wrap">
-      <h2>Comments</h2>
-      <p>No login needed. Keep it thoughtful and respectful.</p>
+    <section className="flex flex-col gap-6" aria-labelledby="comments-title">
+      <div>
+        <h2 id="comments-title">Comments</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          No login needed. Keep it thoughtful and respectful.
+        </p>
+      </div>
 
-      <form className="comment-form" onSubmit={onSubmit}>
-        <input
-          type="text"
-          value={authorName}
-          onChange={(event) => setAuthorName(event.target.value)}
-          placeholder="Your name"
-          minLength={2}
-          maxLength={80}
-          required
-        />
-        <textarea
-          value={content}
-          onChange={(event) => setContent(event.target.value)}
-          placeholder="Share your perspective"
-          minLength={2}
-          maxLength={2000}
-          rows={4}
-          required
-        />
-        <button type="submit" disabled={isDisabled}>
-          {isSubmitting ? "Posting..." : "Post comment"}
-        </button>
-        {error && <p className="comment-error">{error}</p>}
+      <form className="flex flex-col gap-3" onSubmit={onSubmit}>
+        <FormField id="comment-name" label="Name">
+          <Input
+            id="comment-name"
+            className="bg-card"
+            type="text"
+            value={authorName}
+            onChange={(event) => setAuthorName(event.target.value)}
+            placeholder="Your name"
+            minLength={2}
+            maxLength={80}
+            required
+          />
+        </FormField>
+        <FormField id="comment-body" label="Comment">
+          <Textarea
+            id="comment-body"
+            className="bg-card"
+            value={content}
+            onChange={(event) => setContent(event.target.value)}
+            placeholder="Share your perspective"
+            minLength={2}
+            maxLength={2000}
+            rows={4}
+            required
+          />
+        </FormField>
+        <Button type="submit" disabled={isDisabled} className="self-start">
+          {isSubmitting ? "Posting…" : "Post comment"}
+        </Button>
+        {error && (
+          <p className="text-sm text-destructive" role="alert">
+            {error}
+          </p>
+        )}
       </form>
 
-      <div className="comment-list">
-        {comments.length === 0 ? (
-          <p className="comment-empty">No comments yet. Start the conversation.</p>
-        ) : (
-          comments.map((comment) => (
-            <article key={comment.id} className="comment-item">
-              <header>
-                <strong>{comment.author_name}</strong>
-                <span>{formatDate(comment.created_at)}</span>
-              </header>
-              <p>{comment.content}</p>
-            </article>
-          ))
-        )}
-      </div>
+      {comments.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No comments yet. Start the conversation.</p>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {comments.map((comment) => (
+            <li key={comment.id}>
+              <article className="rounded-xl border border-border bg-card p-4">
+                <header className="flex items-baseline justify-between gap-3">
+                  <strong className="text-sm">{comment.author_name}</strong>
+                  <span className="text-xs text-muted-foreground">{formatDate(comment.created_at)}</span>
+                </header>
+                <p className="mt-2 whitespace-pre-line text-sm">{comment.content}</p>
+              </article>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

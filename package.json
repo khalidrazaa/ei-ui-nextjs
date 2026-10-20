@@ -2,6 +2,9 @@
   "name": "explainit.tech-nextjs",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -11,13 +14,20 @@
   },
   "dependencies": {
     "@next/third-parties": "^16.3.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "embla-carousel-autoplay": "^8.6.0",
+    "embla-carousel-react": "^8.6.0",
     "libphonenumber-js": "1.13.15",
     "lucide-react": "^0.544.0",
+    "motion": "^14.4.0",
     "next": "^16.1.4",
     "nextjs": "^0.0.3",
     "postinstall-postinstall": "^2.1.0",
+    "radix-ui": "^1.8.1",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

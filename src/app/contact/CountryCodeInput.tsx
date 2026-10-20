@@ -3,11 +3,10 @@
 import { ChevronDown } from "lucide-react";
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 
-import styles from "../info-pages.module.css";
 
 const countryCodes = [
   { code: "+91", label: "India" },
-  { code: "+81", label: "Japaan" },
+  { code: "+81", label: "Japan" },
   { code: "+1", label: "US / Canada" },
   { code: "+44", label: "UK" },
   { code: "+971", label: "UAE" },
@@ -99,14 +98,14 @@ export default function CountryCodeInput({ value, onChange, disabled }: CountryC
   return (
     <div
       ref={containerRef}
-      className={styles.countryCodeControl}
+      className="relative w-28 shrink-0"
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setIsOpen(false);
       }}
     >
       <input
         ref={inputRef}
-        className={styles.countryCodeInput}
+        className="h-9 w-full rounded-md border border-input bg-card px-3 pr-8 text-base shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50 md:text-sm"
         id="contact-country-code"
         name="country_code"
         aria-label="Country code"
@@ -130,7 +129,7 @@ export default function CountryCodeInput({ value, onChange, disabled }: CountryC
         disabled={disabled}
       />
       <button
-        className={styles.countryCodeToggle}
+        className="absolute inset-y-0 right-0 flex w-8 items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-50"
         type="button"
         tabIndex={-1}
         aria-label={open ? "Hide country codes" : "Show country codes"}
@@ -150,12 +149,12 @@ export default function CountryCodeInput({ value, onChange, disabled }: CountryC
         <ChevronDown size={16} aria-hidden="true" />
       </button>
       {open && (
-        <div ref={listRef} id={listId} className={styles.countryCodeList} role="listbox" aria-label="Country codes">
+        <div ref={listRef} id={listId} className="absolute left-0 top-full z-50 mt-1 max-h-64 w-72 overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md" role="listbox" aria-label="Country codes">
           {countryCodes.map(({ code, label }, index) => (
             <button
               id={`${listId}-${index}`}
               key={code}
-              className={styles.countryCodeOption}
+              className="flex w-full items-center gap-3 rounded-sm px-2 py-1.5 text-left text-sm data-[active=true]:bg-accent data-[active=true]:text-accent-foreground aria-selected:font-medium"
               type="button"
               role="option"
               aria-selected={code === value.trim()}
@@ -165,7 +164,7 @@ export default function CountryCodeInput({ value, onChange, disabled }: CountryC
               onMouseEnter={() => setActiveIndex(index)}
               onClick={() => selectOption(index)}
             >
-              <span className={styles.countryCodeValue}>{code}</span>
+              <span className="w-12 font-medium tabular-nums">{code}</span>
               <span>{label}</span>
             </button>
           ))}

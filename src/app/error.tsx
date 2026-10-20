@@ -1,11 +1,15 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 export default function ErrorPage({ reset }: { reset: () => void }) {
   return (
-    <section className="empty-state" role="alert">
+    <section className="flex flex-col items-start gap-3 py-12" role="alert">
       <h1>Unable to load content</h1>
-      <p>Please try again in a moment.</p>
-      <button type="button" className="chip-button" onClick={reset}>Try again</button>
+      <p className="text-muted-foreground">Please try again in a moment.</p>
+      <Button type="button" className="mt-2" onClick={reset}>
+        Try again
+      </Button>
     </section>
   );
 }

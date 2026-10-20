@@ -1,37 +1,122 @@
+import { ArrowUp, Mail, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
+import BrandMark from "@/components/common/BrandMark";
+import Container from "@/components/common/Container";
+import { Button } from "@/components/ui/button";
+import { ctaNavItem, navItems } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
 
-import styles from "./AppFooter.module.css";
+type FooterLinkProps = {
+  href: string;
+  children: React.ReactNode;
+  icon?: LucideIcon;
+  external?: boolean;
+  label?: string;
+};
+
+function FooterLink({ href, children, icon: Icon, external, label }: FooterLinkProps) {
+  const className =
+    "inline-flex h-7 items-center gap-2 text-sm text-foreground/80 transition-colors hover:text-primary";
+  const content = (
+    <>
+      {Icon && <Icon className="size-4 shrink-0" aria-hidden="true" />}
+      {children}
+    </>
+  );
+
+  return external ? (
+    <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className={className}>
+      {content}
+    </a>
+  ) : (
+    <Link href={href} className={className}>
+      {content}
+    </Link>
+  );
+}
+
+function FooterColumn({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <nav aria-label={title}>
+      <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</h2>
+      <ul className="flex flex-col">{children}</ul>
+    </nav>
+  );
+}
 
 export default function AppFooter() {
+  const { footerCta } = siteConfig;
+
   return (
-    <footer className={styles.footer}>
-      <div className={`app-shell ${styles.inner}`}>
-        <p className={styles.copy}>
-          <strong>{siteConfig.brandName} © 2026</strong>
-          <span>Practical explanations for data, analytics and technology.</span>
-        </p>
-        <nav className={styles.links} aria-label="Footer navigation">
-          <Link href="/about">About</Link>
-          <Link href="/contact">Contact</Link>
+    <footer className="border-t border-border bg-card/70 pb-[calc(var(--dock-height)+env(safe-area-inset-bottom))] md:pb-0">
+      <Container className="pt-8">
+        <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-accent/60 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div>
+            <h2 className="text-lg">{footerCta.title}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{footerCta.description}</p>
+          </div>
+          {ctaNavItem && (
+            <Button asChild className="self-start sm:self-auto">
+              <Link href={ctaNavItem.href}>{footerCta.label}</Link>
+            </Button>
+          )}
+        </div>
+      </Container>
+
+      <Container className="grid gap-8 py-8 md:grid-cols-[2fr_1fr_1fr]">
+        <div className="flex max-w-sm flex-col gap-3">
+          <Link href="/" className="flex items-center gap-2.5" aria-label={`${siteConfig.brandName} home`}>
+            <BrandMark className="size-8" />
+            <span className="text-base font-semibold tracking-tight">{siteConfig.brandName}</span>
+          </Link>
+          <p className="text-sm text-muted-foreground">{siteConfig.footerTagline}</p>
+        </div>
+
+        <FooterColumn title="Explore">
+          {navItems.map((item) => (
+            <li key={item.href}>
+              <FooterLink href={item.href} icon={item.icon}>
+                {item.label}
+              </FooterLink>
+            </li>
+          ))}
+        </FooterColumn>
+
+        <FooterColumn title="Connect">
+          <li>
+            <FooterLink href={`mailto:${siteConfig.contactEmail}`} icon={Mail} external>
+              {siteConfig.contactEmail}
+            </FooterLink>
+          </li>
+          {siteConfig.socialLinks.map((link) => (
+            <li key={link.href}>
+              <FooterLink
+                href={link.href}
+                icon={link.icon}
+                external
+                label={`${link.label} (opens in a new tab)`}
+              >
+                {link.label}
+              </FooterLink>
+            </li>
+          ))}
+        </FooterColumn>
+      </Container>
+
+      <div className="border-t border-border">
+        <Container className="flex items-center justify-between gap-4 py-3 text-xs text-muted-foreground">
+          <p>
+            © {new Date().getFullYear()} {siteConfig.brandName}. All rights reserved.
+          </p>
           <a
-            href="https://www.linkedin.com/in/khalidrazaa/"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="LinkedIn (opens in a new tab)"
+            href="#top"
+            className="inline-flex items-center gap-1 transition-colors hover:text-foreground"
           >
-            LinkedIn
+            Back to top
+            <ArrowUp className="size-3" aria-hidden="true" />
           </a>
-          <a
-            href="https://github.com/khalidrazaa"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="GitHub (opens in a new tab)"
-          >
-            GitHub
-          </a>
-        </nav>
+        </Container>
       </div>
     </footer>
   );
