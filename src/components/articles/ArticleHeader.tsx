@@ -21,7 +21,7 @@ export default function ArticleHeader({ article }: ArticleHeaderProps) {
   ];
 
   return (
-    <header className="mx-auto flex max-w-3xl flex-col items-center gap-4 text-center">
+    <header className="mx-auto flex max-w-4xl flex-col items-center gap-4 text-center">
       <div className="flex flex-col items-center gap-3">
         <Breadcrumbs items={crumbs} />
         <div className="flex flex-wrap items-center justify-center gap-2">

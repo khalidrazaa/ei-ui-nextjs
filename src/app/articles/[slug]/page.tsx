@@ -112,9 +112,9 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
       <article className="flex flex-col gap-8">
         <ArticleHeader article={article} />
 
-        <ArticleCover article={article} className="mx-auto aspect-[3/1] max-w-5xl rounded-2xl border border-border" />
+        <ArticleCover article={article} className="aspect-[3/1] rounded-2xl border border-border" />
 
-        <div className="grid gap-8 lg:grid-cols-[2.25rem_minmax(0,40rem)_13rem] lg:justify-center lg:gap-10">
+        <div className="grid gap-8 lg:grid-cols-[2.5rem_minmax(0,48rem)_15rem] lg:justify-between lg:gap-8">
           <aside className="hidden lg:block" aria-label="Share">
             <div className="sticky top-[calc(var(--header-height)+1.5rem)]">
               <ShareButtons slug={slug} title={article.title} direction="column" />

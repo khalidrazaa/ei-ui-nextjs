@@ -174,7 +174,7 @@
 
   /* Long-form article typography: a serif reading column with sans headings. */
   .article-prose {
-    @apply font-serif text-[1.0625rem] text-foreground;
+    @apply font-serif text-[1.1875rem] text-foreground;
     line-height: 1.75;
   }
   .article-prose > * + * {
@@ -182,7 +182,7 @@
   }
   /* Lead paragraph */
   .article-prose > p:first-child {
-    @apply text-xl text-foreground/90;
+    @apply text-[1.375rem] text-foreground/90;
     line-height: 1.6;
   }
   .article-prose h1,
