@@ -57,7 +57,7 @@ export default function AppFooter() {
             <p className="mt-1 text-sm text-muted-foreground">{footerCta.description}</p>
           </div>
           {ctaNavItem && (
-            <Button asChild variant="warm" className="self-start sm:self-auto">
+            <Button asChild className="self-start sm:self-auto">
               <Link href={ctaNavItem.href}>{footerCta.label}</Link>
             </Button>
           )}

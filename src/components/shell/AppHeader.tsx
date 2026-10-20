@@ -43,7 +43,7 @@ export default function AppHeader() {
           </nav>
 
           {ctaNavItem && (
-            <Button asChild size="sm" variant="warm">
+            <Button asChild size="sm">
               <Link href={ctaNavItem.href}>{ctaNavItem.label}</Link>
             </Button>
           )}
