@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, ListFilter } from "lucide-react";
-import { useRouter, useSelectedLayoutSegment } from "next/navigation";
+import { useRouter, useSearchParams, useSelectedLayoutSegment } from "next/navigation";
 import { type ReactNode, useEffect, useId, useMemo, useState } from "react";
 
 import ArticleRow from "@/components/articles/ArticleRow";
@@ -90,10 +90,16 @@ function CountLabel({ value }: { value: number }) {
 export default function ArticleLibrary({ articles, children }: ArticleLibraryProps) {
   const router = useRouter();
   const isReadingArticle = useSelectedLayoutSegment() !== null;
+  const searchParams = useSearchParams();
   const categoryListPrefix = useId();
-  const [query, setQuery] = useState("");
+  const categoryParam = searchParams.get("category");
+  const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
   const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(() =>
+    categoryParam && articles.some((article) => articleCategory(article) === categoryParam)
+      ? categoryParam
+      : null,
+  );
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});

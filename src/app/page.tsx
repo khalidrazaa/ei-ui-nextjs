@@ -1,15 +1,24 @@
-import ArticleFeed from "@/components/articles/ArticleFeed";
-import HeroBanner from "@/components/articles/HeroBanner";
+import EmptyState from "@/components/common/EmptyState";
+import HomeHero from "@/components/home/HomeHero";
+import LatestArticles from "@/components/home/LatestArticles";
+import TopicGrid from "@/components/home/TopicGrid";
 import { getPublishedArticles } from "@/lib/articles";
+import { getTopics } from "@/lib/topics";
 
 export default async function HomePage() {
   const { articles } = await getPublishedArticles(120);
-  const categoryCount = new Set(articles.map((article) => article.category).filter(Boolean)).size;
+  const [featured, ...rest] = articles;
+  const topics = getTopics(articles);
+
+  if (!featured) {
+    return <EmptyState title="No articles published yet" description="Check back soon." />;
+  }
 
   return (
-    <div className="flex flex-col gap-7">
-      <HeroBanner articleCount={articles.length} categoryCount={categoryCount} />
-      <ArticleFeed articles={articles} title="Latest articles" />
+    <div className="flex flex-col gap-12">
+      <HomeHero featured={featured} topics={topics} />
+      <TopicGrid topics={topics} />
+      <LatestArticles articles={rest} />
     </div>
   );
 }
