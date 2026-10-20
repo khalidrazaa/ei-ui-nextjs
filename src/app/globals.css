@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 
 /* Dark styles only apply under an explicit .dark class (no dark palette defined yet). */
 @custom-variant dark (&:is(.dark *));
