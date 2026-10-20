@@ -1,0 +1,145 @@
+import Link from "next/link";
+
+import { ArticleQuery, CategoryGroup, articlesHref } from "@/lib/article-query";
+import { cn } from "@/lib/utils";
+
+type CategoryNavProps = {
+  groups: CategoryGroup[];
+  total: number;
+  query: ArticleQuery;
+};
+
+function hrefFor(query: ArticleQuery, category: string | null, subcategory: string | null = null) {
+  return articlesHref({ ...query, category, subcategory, page: 1 });
+}
+
+function Count({ value }: { value: number }) {
+  return <span className="ml-auto pl-2 text-xs tabular-nums text-muted-foreground">{value}</span>;
+}
+
+const rowClass =
+  "flex items-center rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-accent/60";
+
+/** Desktop sidebar; the active category expands to show its subcategories. */
+function Sidebar({ groups, total, query }: CategoryNavProps) {
+  return (
+    <nav aria-label="Categories" className="flex flex-col gap-0.5">
+      <Link
+        href={hrefFor(query, null)}
+        aria-current={!query.category ? "page" : undefined}
+        className={cn(rowClass, !query.category && "bg-accent font-medium text-accent-foreground")}
+      >
+        All articles
+        <Count value={total} />
+      </Link>
+
+      {groups.map((group) => {
+        const active = query.category === group.category;
+
+        return (
+          <div key={group.category} className="flex flex-col">
+            <Link
+              href={hrefFor(query, group.category)}
+              aria-current={active && !query.subcategory ? "page" : undefined}
+              className={cn(
+                rowClass,
+                "font-medium",
+                active && !query.subcategory && "bg-accent text-accent-foreground",
+              )}
+            >
+              {group.category}
+              <Count value={group.count} />
+            </Link>
+
+            {active && (
+              <ul className="ml-3 flex flex-col border-l border-border pl-2">
+                {group.branches.map((branch) => {
+                  const branchActive = query.subcategory === branch.subcategory;
+
+                  return (
+                    <li key={branch.subcategory}>
+                      <Link
+                        href={hrefFor(query, group.category, branch.subcategory)}
+                        aria-current={branchActive ? "page" : undefined}
+                        className={cn(
+                          rowClass,
+                          "text-muted-foreground",
+                          branchActive && "bg-accent font-medium text-accent-foreground",
+                        )}
+                      >
+                        {branch.subcategory}
+                        <Count value={branch.count} />
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
+
+const chipClass =
+  "shrink-0 rounded-full border border-border bg-card px-3 py-1 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent";
+const chipActiveClass = "border-primary bg-primary text-primary-foreground hover:bg-primary";
+
+/** Mobile: scrollable category chips, plus subcategory chips when one is active. */
+function Chips({ groups, query }: CategoryNavProps) {
+  const active = groups.find((group) => group.category === query.category);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <nav aria-label="Categories" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
+        <Link href={hrefFor(query, null)} className={cn(chipClass, !query.category && chipActiveClass)}>
+          All
+        </Link>
+        {groups.map((group) => (
+          <Link
+            key={group.category}
+            href={hrefFor(query, group.category)}
+            className={cn(chipClass, query.category === group.category && chipActiveClass)}
+          >
+            {group.category}
+          </Link>
+        ))}
+      </nav>
+
+      {active && active.branches.length > 1 && (
+        <nav aria-label="Subcategories" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
+          {active.branches.map((branch) => (
+            <Link
+              key={branch.subcategory}
+              href={hrefFor(query, active.category, branch.subcategory)}
+              className={cn(
+                chipClass,
+                "px-2.5 py-0.5 text-xs",
+                query.subcategory === branch.subcategory && chipActiveClass,
+              )}
+            >
+              {branch.subcategory}
+            </Link>
+          ))}
+        </nav>
+      )}
+    </div>
+  );
+}
+
+export default function CategoryNav(props: CategoryNavProps) {
+  return (
+    <>
+      <aside className="hidden lg:block">
+        <div className="sticky top-[calc(var(--header-height)+1.25rem)] flex flex-col gap-2">
+          <p className="px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Categories</p>
+          <Sidebar {...props} />
+        </div>
+      </aside>
+      <div className="min-w-0 lg:hidden">
+        <Chips {...props} />
+      </div>
+    </>
+  );
+}
