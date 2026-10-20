@@ -1,21 +1,26 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import ArticleMeta from "@/components/common/ArticleMeta";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import ArticleBody from "@/components/articles/ArticleBody";
-import ArticleCard from "@/components/articles/ArticleCard";
 import ArticleCover from "@/components/articles/ArticleCover";
-import ReadingProgress from "@/components/articles/ReadingProgress";
-import TableOfContents from "@/components/articles/TableOfContents";
-import Breadcrumbs, { type Crumb } from "@/components/common/Breadcrumbs";
-import CopyLinkButton from "@/components/common/CopyLinkButton";
+import ArticleHeader from "@/components/articles/ArticleHeader";
+import ArticleNav from "@/components/articles/ArticleNav";
+import AuthorBox from "@/components/articles/AuthorBox";
 import CommentSection from "@/components/articles/CommentSection";
+import InlineContents from "@/components/articles/InlineContents";
+import ReadingProgress from "@/components/articles/ReadingProgress";
+import ShareButtons from "@/components/articles/ShareButtons";
+import TableOfContents from "@/components/articles/TableOfContents";
+import ArticleRail from "@/components/home/ArticleRail";
+import { Badge } from "@/components/ui/badge";
 import { siteConfig } from "@/config/site";
-import { getArticleBySlug, getCommentsForSlug, getRelatedArticles } from "@/lib/articles";
-import { formatDate, formatReadingTime } from "@/lib/format";
+import { getArticleBySlug, getCommentsForSlug, getPublishedArticles } from "@/lib/articles";
 import { extractHeadings } from "@/lib/headings";
+import { articleUrl } from "@/lib/share";
+import { Article } from "@/types/article";
+
+const FETCH_LIMIT = 200;
+const RELATED_LIMIT = 6;
 
 type ArticlePageProps = {
   params: Promise<{ slug: string }>;
@@ -33,16 +38,43 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
   }
 
   const description = article.meta_description || article.excerpt || siteConfig.description;
+  const image = article.open_graph_image || article.featured_image_url;
 
   return {
     title: article.seo_title || article.title,
     description,
+    alternates: { canonical: article.canonical_url || `/articles/${slug}` },
     openGraph: {
       title: article.open_graph_title || article.title,
       description: article.open_graph_description || description,
       type: "article",
-      images: article.open_graph_image ? [{ url: article.open_graph_image }] : undefined,
+      url: articleUrl(slug),
+      publishedTime: article.published_at || undefined,
+      authors: [siteConfig.author.name],
+      images: image ? [{ url: image }] : undefined,
     },
+    twitter: {
+      card: image ? "summary_large_image" : "summary",
+      title: article.open_graph_title || article.title,
+      description,
+    },
+  };
+}
+
+/** schema.org Article markup for search engines. */
+function structuredData(article: Article, slug: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": article.schema_type || "Article",
+    headline: article.title,
+    description: article.meta_description || article.excerpt || undefined,
+    image: article.featured_image_url || article.open_graph_image || undefined,
+    datePublished: article.published_at || article.created_at || undefined,
+    dateModified: article.updated_at || article.published_at || undefined,
+    keywords: (article.keywords || []).join(", ") || undefined,
+    author: { "@type": "Person", name: siteConfig.author.name },
+    publisher: { "@type": "Organization", name: siteConfig.brandName, url: `https://${siteConfig.domain}` },
+    mainEntityOfPage: articleUrl(slug),
   };
 }
 
@@ -50,87 +82,87 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
-  const [comments, related] = await Promise.all([
+
+  const [comments, { articles }] = await Promise.all([
     getCommentsForSlug(slug),
-    getRelatedArticles(slug, 4),
+    getPublishedArticles(FETCH_LIMIT),
   ]);
+
+  // The list is newest first: the previous index is newer, the next is older.
+  const position = articles.findIndex((item) => item.slug === slug);
+  const newer = position > 0 ? articles[position - 1] : null;
+  const older = position >= 0 && position < articles.length - 1 ? articles[position + 1] : null;
+
+  // Same category first, then the rest, never the current article.
+  const others = articles.filter((item) => item.slug !== slug);
+  const related = [
+    ...others.filter((item) => item.category && item.category === article.category),
+    ...others.filter((item) => !item.category || item.category !== article.category),
+  ].slice(0, RELATED_LIMIT);
+
   const headings = article.content ? extractHeadings(article.content) : [];
-  const published = formatDate(article.published_at || article.created_at);
-  const crumbs: Crumb[] = [
-    { label: "Articles", href: "/articles" },
-    ...(article.category ? [{ label: article.category }] : []),
-    { label: article.title },
-  ];
+  const tags = article.tags || [];
+  const ld = JSON.stringify(structuredData(article, slug)).replace(/</g, "\\u003c");
 
   return (
     <>
       <ReadingProgress />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld }} />
 
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_13rem]">
-        <article className="flex min-w-0 max-w-2xl flex-col gap-6">
-          <header className="flex flex-col gap-3">
-            <Breadcrumbs items={crumbs} />
+      <article className="flex flex-col gap-8">
+        <ArticleHeader article={article} />
 
-            <div className="flex flex-wrap items-center gap-2">
-              {article.category && <Badge variant="secondary">{article.category}</Badge>}
-              {article.subcategory && <Badge variant="outline">{article.subcategory}</Badge>}
+        <ArticleCover article={article} className="mx-auto aspect-[3/1] max-w-5xl rounded-2xl border border-border" />
+
+        <div className="grid gap-8 lg:grid-cols-[2.25rem_minmax(0,40rem)_13rem] lg:justify-center lg:gap-10">
+          <aside className="hidden lg:block" aria-label="Share">
+            <div className="sticky top-[calc(var(--header-height)+1.5rem)]">
+              <ShareButtons slug={slug} title={article.title} direction="column" />
             </div>
+          </aside>
 
-            <h1 className="text-balance text-3xl sm:text-4xl">{article.title}</h1>
-            {(article.excerpt || article.meta_description) && (
-              <p className="text-base text-muted-foreground sm:text-lg">
-                {article.excerpt || article.meta_description}
-              </p>
+          <div className="flex min-w-0 flex-col gap-8">
+            <InlineContents headings={headings} />
+
+            {article.content && <ArticleBody content={article.content} title={article.title} />}
+
+            {tags.length > 0 && (
+              <ul className="flex flex-wrap gap-1.5" aria-label="Tags">
+                {tags.map((tag) => (
+                  <li key={`${article.id}-${tag}`}>
+                    <Badge variant="secondary">{tag}</Badge>
+                  </li>
+                ))}
+              </ul>
             )}
 
-            <div className="flex flex-wrap items-center justify-between gap-3 border-y border-border py-2.5">
-              <ArticleMeta
-                className="text-sm text-muted-foreground"
-                date={published}
-                readingTime={formatReadingTime(article.reading_time)}
-              />
-              <CopyLinkButton />
+            <div className="flex items-center gap-3 lg:hidden">
+              <span className="text-sm text-muted-foreground">Share</span>
+              <ShareButtons slug={slug} title={article.title} />
             </div>
-          </header>
 
-          <ArticleCover article={article} className="aspect-[3/1] rounded-xl border border-border" />
-
-          {article.content && <ArticleBody content={article.content} title={article.title} />}
-
-          {(article.tags || []).length > 0 && (
-            <ul className="flex flex-wrap gap-1.5" aria-label="Tags">
-              {(article.tags || []).map((tag) => (
-                <li key={`${article.id}-${tag}`}>
-                  <Badge variant="secondary">{tag}</Badge>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <Separator />
-
-          <CommentSection key={slug} slug={slug} initialComments={comments} />
-        </article>
-
-        <aside className="hidden lg:block">
-          <div className="sticky top-[calc(var(--header-height)+1.25rem)]">
-            <TableOfContents headings={headings} />
+            <AuthorBox />
+            <ArticleNav newer={newer} older={older} />
+            <CommentSection key={slug} slug={slug} initialComments={comments} />
           </div>
-        </aside>
-      </div>
 
-      {related.length > 0 && (
-        <section className="mt-10 flex flex-col gap-3" aria-labelledby="related-title">
-          <h2 id="related-title">Related reads</h2>
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {related.slice(0, 3).map((item) => (
-              <li key={item.id}>
-                <ArticleCard article={item} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+          <aside className="hidden lg:block" aria-label="Table of contents">
+            <div className="sticky top-[calc(var(--header-height)+1.5rem)]">
+              <TableOfContents headings={headings} />
+            </div>
+          </aside>
+        </div>
+      </article>
+
+      <div className="mt-14">
+        <ArticleRail
+          id="keep-reading-title"
+          title="Keep reading"
+          description={article.category ? `More from ${article.category} and beyond.` : undefined}
+          articles={related}
+          action={{ href: "/articles", label: "All articles" }}
+        />
+      </div>
     </>
   );
 }

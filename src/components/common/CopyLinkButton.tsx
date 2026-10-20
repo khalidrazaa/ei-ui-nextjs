@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/button";
 
 const RESET_DELAY_MS = 2000;
 
-export default function CopyLinkButton({ label = "Copy link" }: { label?: string }) {
+type CopyLinkButtonProps = {
+  label?: string;
+  /** Round icon-only button, for compact share rails. */
+  iconOnly?: boolean;
+};
+
+export default function CopyLinkButton({ label = "Copy link", iconOnly = false }: CopyLinkButtonProps) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -25,9 +31,27 @@ export default function CopyLinkButton({ label = "Copy link" }: { label?: string
     }
   }
 
+  const Icon = copied ? Check : Link2;
+
+  if (iconOnly) {
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="size-9 rounded-full"
+        onClick={copy}
+        aria-label={copied ? "Link copied" : label}
+        title={copied ? "Copied" : label}
+      >
+        <Icon aria-hidden="true" />
+      </Button>
+    );
+  }
+
   return (
     <Button type="button" variant="outline" size="sm" onClick={copy} aria-live="polite">
-      {copied ? <Check aria-hidden="true" /> : <Link2 aria-hidden="true" />}
+      <Icon aria-hidden="true" />
       {copied ? "Copied" : label}
     </Button>
   );

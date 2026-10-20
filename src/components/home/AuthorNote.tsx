@@ -1,16 +1,8 @@
 import Link from "next/link";
 
+import AuthorAvatar from "@/components/common/AuthorAvatar";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .map((part) => part.charAt(0))
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 /** Short personal note that closes the home page. */
 export default function AuthorNote() {
@@ -21,12 +13,7 @@ export default function AuthorNote() {
       className="grid items-center gap-5 rounded-2xl border border-border bg-card p-6 sm:p-8 md:grid-cols-[auto_1fr_auto]"
       aria-labelledby="author-title"
     >
-      <span
-        aria-hidden="true"
-        className="inline-flex size-14 items-center justify-center rounded-full bg-primary text-lg font-semibold text-primary-foreground"
-      >
-        {initials(author.name)}
-      </span>
+      <AuthorAvatar name={author.name} className="size-14 text-lg" />
 
       <div className="max-w-2xl">
         <p className="text-xs font-medium uppercase tracking-wide text-primary">Behind {brandName}</p>

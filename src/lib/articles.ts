@@ -75,10 +75,6 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
   }
 }
 
-export async function getRelatedArticles(slug: string, limit = 4): Promise<Article[]> {
-  const { articles } = await getPublishedArticles(120);
-  return articles.filter((article) => article.slug !== slug).slice(0, limit);
-}
 
 export async function getCommentsForSlug(slug: string): Promise<ArticleComment[]> {
   const hostSite = normalizeHost(siteConfig.hostSite);
