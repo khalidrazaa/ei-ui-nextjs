@@ -438,3 +438,59 @@ test("production Contact page exposes the form without the backend key", async (
   assert.equal(html.includes("This form is currently unavailable"), false);
   assert.equal(html.includes("contact-test-key"), false);
 });
+
+test("built pages still load when runtime credentials are missing, but contact reports a safe failure", { timeout: 25_000 }, async () => {
+  const reservation = createServer();
+  const port = await listen(reservation);
+  await new Promise((resolve) => reservation.close(resolve));
+  const origin = `http://127.0.0.1:${port}`;
+  const runtime = spawn(process.execPath, [
+    fileURLToPath(new URL("../node_modules/next/dist/bin/next", import.meta.url)),
+    "start", "--hostname", "127.0.0.1", "--port", String(port),
+  ], {
+    cwd: appDirectory,
+    windowsHide: true,
+    env: {
+      ...process.env,
+      API_URL: `${backendOrigin}/v1`,
+      PUBLIC_APP_KEY: "",
+      NEXT_TELEMETRY_DISABLED: "1",
+    },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let output = "";
+  for (const stream of [runtime.stdout, runtime.stderr]) {
+    stream.on("data", (chunk) => { output = (output + chunk).slice(-2000); });
+  }
+  try {
+    let ready = false;
+    const deadline = Date.now() + 15_000;
+    while (Date.now() < deadline && runtime.exitCode === null) {
+      try {
+        ready = (await fetch(`${origin}/api/contact`, { signal: AbortSignal.timeout(500) })).status === 405;
+        if (ready) break;
+      } catch {
+        // Wait for this independently configured runtime to start.
+      }
+      await delay(100);
+    }
+    assert.ok(ready, `Missing-credential runtime failed to start:\n${output}`);
+    assert.equal((await fetch(`${origin}/contact`)).status, 200);
+    const detail = "Unable to send your message. Please try again or email core@explainit.tech.";
+    assert.deepEqual(await submitContactAction(validMessage, `${origin}/contact`), { status: false, detail });
+    const response = await fetch(`${origin}/api/contact`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(validMessage),
+    });
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), { detail });
+    assert.equal(requests.length, 0, "Missing runtime configuration must fail before contacting the backend");
+  } finally {
+    if (runtime.exitCode === null) {
+      const exited = once(runtime, "exit");
+      runtime.kill();
+      await exited;
+    }
+  }
+});

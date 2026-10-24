@@ -37,6 +37,19 @@ function fixtures(count, revision) {
   });
 }
 
+function articlePage(articles, page, size) {
+  const total_pages = Math.ceil(articles.length / size);
+  return {
+    items: articles.slice((page - 1) * size, page * size),
+    total: articles.length,
+    page,
+    size,
+    total_pages,
+    has_next: page < total_pages,
+    has_previous: page > 1,
+  };
+}
+
 async function listen(server) {
   server.listen(0, "127.0.0.1");
   await once(server, "listening");
@@ -169,11 +182,13 @@ test("builds every article beyond 200, serves without database reads, and refres
   const backend = createServer((request, response) => {
     requests.push({ method: request.method, url: request.url, key: request.headers["x-public-app-key"] });
     const url = new URL(request.url, "http://mock.test");
+    const page = Number(url.searchParams.get("page"));
+    const size = Number(url.searchParams.get("size"));
     const valid = request.method === "GET" && url.pathname === "/v1/public/articles" &&
-      url.searchParams.get("host_site") === "explainit.tech" && url.searchParams.get("limit") === "500" &&
+      url.searchParams.get("host_site") === "explainit.tech" && size === 100 && Number.isInteger(page) && page > 0 &&
       request.headers["x-public-app-key"] === testKey;
     response.writeHead(readsAllowed && valid ? 200 : 503, { "Content-Type": "application/json" });
-    response.end(JSON.stringify(readsAllowed && valid ? articles : { detail: "Mock content API is unavailable" }));
+    response.end(JSON.stringify(readsAllowed && valid ? articlePage(articles, page, size) : { detail: "Mock content API is unavailable" }));
   });
 
   try {
@@ -191,7 +206,8 @@ test("builds every article beyond 200, serves without database reads, and refres
     };
     const firstManifest = await build(directory, env, children, context);
     assert.ok(requests.length > 0, "The build must fetch published articles from the API");
-    assert.ok(requests.every((request) => request.method === "GET" && request.url === "/v1/public/articles?host_site=explainit.tech&limit=500" && request.key === testKey), "Build must read only the complete public article list, never comments or individual article details");
+    assert.deepEqual(requests.map((request) => request.url), [1, 2, 3].map((page) => `/v1/public/articles?host_site=explainit.tech&page=${page}&size=100`), "Build must request each page exactly once");
+    assert.ok(requests.every((request) => request.method === "GET" && request.key === testKey), "Build must authenticate every page request");
     for (const article of articles) {
       const route = firstManifest.routes[`/articles/${article.slug}`];
       assert.ok(route, `${article.slug} must be generated during the build`);
@@ -258,11 +274,13 @@ test("development loads edits live and discovers new slugs after restarting", { 
   let running;
   const backend = createServer((request, response) => {
     const url = new URL(request.url, "http://mock.test");
+    const page = Number(url.searchParams.get("page"));
+    const size = Number(url.searchParams.get("size"));
     const valid = request.method === "GET" && url.pathname === "/v1/public/articles" &&
-      url.searchParams.get("host_site") === "explainit.tech" && url.searchParams.get("limit") === "500" &&
+      url.searchParams.get("host_site") === "explainit.tech" && size === 100 && Number.isInteger(page) && page > 0 &&
       request.headers["x-public-app-key"] === testKey;
     response.writeHead(valid ? 200 : 404, { "Content-Type": "application/json" });
-    response.end(JSON.stringify(valid ? articles : { detail: "Unexpected mock API request" }));
+    response.end(JSON.stringify(valid ? articlePage(articles, page, size) : { detail: "Unexpected mock API request" }));
   });
   try {
     const backendPort = await listen(backend);

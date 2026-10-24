@@ -2,9 +2,8 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import nextEnv from "@next/env";
+import { loadArticlePages } from "../src/lib/article-pages.mjs";
 
-// The backend's current public list has no pagination and accepts at most 500.
-export const PUBLIC_ARTICLES_LIMIT = 500;
 const articleFields = [
   "id", "title", "slug", "seo_title", "category", "subcategory", "status",
   "created_at", "updated_at", "published_at", "drafted_at", "content", "excerpt",
@@ -19,9 +18,6 @@ function normalizeHost(value) {
 
 export function preparePublishedArticles(response, hostSite) {
   if (!Array.isArray(response)) throw new Error("Invalid public article list response.");
-  if (response.length >= PUBLIC_ARTICLES_LIMIT) {
-    throw new Error("The public article API reached its 500-article limit. Add backend pagination before building so no published pages are omitted.");
-  }
   if (response.some((article) => !article || typeof article !== "object" ||
       !["published", "draft"].includes(article.status) || typeof article.host_site !== "string" || !normalizeHost(article.host_site))) {
     throw new Error("Invalid public article status or host in the API response.");
@@ -52,20 +48,24 @@ export async function buildArticleSnapshot() {
   const appKey = (process.env.PUBLIC_APP_KEY || "").trim();
   if (!apiUrl || !appKey) throw new Error("API_URL and PUBLIC_APP_KEY are required to build published article pages.");
 
-  const url = new URL(`${apiUrl}/public/articles`);
-  url.searchParams.set("host_site", normalizeHost(hostSite));
-  url.searchParams.set("limit", String(PUBLIC_ARTICLES_LIMIT));
-  let response;
-  try {
-    response = await fetch(url, {
-      headers: { "X-Public-App-Key": appKey, "Accept": "application/json" },
-      signal: AbortSignal.timeout(60_000),
-    });
-  } catch {
-    throw new Error("Unable to reach the published article API. Ensure API_URL is reachable from the build environment.");
-  }
-  if (!response.ok) throw new Error(`Unable to load published articles for the build (HTTP ${response.status}).`);
-  const articles = preparePublishedArticles(await response.json(), hostSite);
+  const response = await loadArticlePages(async (page, size) => {
+    const url = new URL(`${apiUrl}/public/articles`);
+    url.searchParams.set("host_site", normalizeHost(hostSite));
+    url.searchParams.set("page", String(page));
+    url.searchParams.set("size", String(size));
+    let result;
+    try {
+      result = await fetch(url, {
+        headers: { "X-Public-App-Key": appKey, "Accept": "application/json" },
+        signal: AbortSignal.timeout(60_000),
+      });
+    } catch {
+      throw new Error("Unable to reach the published article API. Ensure API_URL is reachable from the build environment.");
+    }
+    if (!result.ok) throw new Error(`Unable to load published articles for the build (HTTP ${result.status}).`);
+    return result.json();
+  });
+  const articles = preparePublishedArticles(response, hostSite);
 
   const outputPath = fileURLToPath(new URL("../src/generated/published-articles.json", import.meta.url));
   await mkdir(dirname(outputPath), { recursive: true });

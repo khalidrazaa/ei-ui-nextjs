@@ -3,8 +3,8 @@ import { Article } from "@/types/article";
 
 /**
  * Everything the Articles page can filter by. It lives in the URL so views are
- * shareable. This is the single place that interprets the query; when the API
- * gains server-side pagination, only queryArticles needs to change.
+ * shareable. Production filters and pagination use the complete build snapshot,
+ * keeping listing links consistent with the generated article pages.
  */
 export type ArticleQuery = {
   q: string;
