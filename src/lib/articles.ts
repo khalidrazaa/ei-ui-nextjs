@@ -7,13 +7,11 @@ import publishedArticles from "@/generated/published-articles.json";
 import { Article, ArticleComment } from "@/types/article";
 
 import { fetchPublicApi } from "@/lib/public-api";
+import { loadArticlePages } from "@/lib/article-pages.mjs";
 
 export type PublishedArticleResult = {
   articles: Article[];
 };
-
-// The backend currently caps this unpaginated endpoint at 500 records.
-const PUBLIC_ARTICLES_LIMIT = 500;
 
 function normalizeHost(value?: string | null): string {
   const host = (value || "").trim().toLowerCase();
@@ -49,7 +47,7 @@ function sortNewestFirst(articles: Article[]): Article[] {
   return [...articles].sort((a, b) => {
     const left = new Date(a.published_at || a.created_at || "").getTime();
     const right = new Date(b.published_at || b.created_at || "").getTime();
-    return right - left;
+    return right - left || b.id - a.id;
   });
 }
 
@@ -58,15 +56,14 @@ const loadPublishedArticles = cache(async (): Promise<Article[]> => {
 
   // Development stays live. Production pages, filters and navigation all use
   // the same bundled snapshot, so no link can point at an unbuilt article.
-  const endpoint = "/public/articles?host_site=" + encodeURIComponent(hostSite) + "&limit=" + PUBLIC_ARTICLES_LIMIT;
   const response = process.env.NODE_ENV === "development"
-    ? await fetchPublicApi<Article[]>(endpoint, { cache: "no-store" })
+    ? await loadArticlePages((page, size) => fetchPublicApi<unknown>(
+      `/public/articles?host_site=${encodeURIComponent(hostSite)}&page=${page}&size=${size}`,
+      { cache: "no-store" },
+    )) as Article[]
     : publishedArticles as Article[];
   if (!Array.isArray(response)) {
     throw new Error("Invalid article list response.");
-  }
-  if (response.length >= PUBLIC_ARTICLES_LIMIT) {
-    throw new Error("The public article API reached its 500-article limit. Add backend pagination before building so no published pages are omitted.");
   }
 
   const slugs = new Set<string>();
