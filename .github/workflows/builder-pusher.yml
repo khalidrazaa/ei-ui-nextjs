@@ -3,6 +3,7 @@ name: Build and Push
 on:
   push:
     branches: [master]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -18,6 +19,17 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Build & Push
+        env:
+          DOCKER_BUILDKIT: "1"
+          API_URL: ${{ secrets.API_URL }}
+          PUBLIC_APP_KEY: ${{ secrets.PUBLIC_APP_KEY }}
+          CONTENT_BUILD_REVISION: ${{ github.run_id }}-${{ github.run_attempt }}
         run: |
-          docker build -t ghcr.io/${{ github.repository }}:latest .
+          test -n "$API_URL" || { echo "Set the API_URL repository secret before building."; exit 1; }
+          test -n "$PUBLIC_APP_KEY" || { echo "Set the PUBLIC_APP_KEY repository secret before building."; exit 1; }
+          docker build \
+            --secret id=API_URL,env=API_URL \
+            --secret id=PUBLIC_APP_KEY,env=PUBLIC_APP_KEY \
+            --build-arg CONTENT_BUILD_REVISION="$CONTENT_BUILD_REVISION" \
+            -t ghcr.io/${{ github.repository }}:latest .
           docker push ghcr.io/${{ github.repository }}:latest

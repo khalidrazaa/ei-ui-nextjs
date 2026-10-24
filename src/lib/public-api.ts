@@ -1,10 +1,5 @@
 import "server-only";
 
-import { connection } from "next/server";
-
-
-// const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-
 function getApiConfig() {
   return {
     base: (
@@ -50,8 +45,8 @@ export async function fetchPublicApi<T>(
   endpoint: string,
   options: ApiFetchOptions = {}
 ): Promise<T> {
-  // Runtime configuration is required only when a request arrives, never during builds.
-  await connection();
+  // Production content comes from the build snapshot. Live comment/contact
+  // routes and development article reads resolve their API config when called.
   const { base: API_BASE, key: PUBLIC_APP_KEY } = getApiConfig();
 
   if (!API_BASE) {

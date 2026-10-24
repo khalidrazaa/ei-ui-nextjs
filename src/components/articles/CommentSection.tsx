@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,15 +11,61 @@ import { formatDate } from "@/lib/format";
 
 type CommentSectionProps = {
   slug: string;
-  initialComments: ArticleComment[];
 };
 
-export default function CommentSection({ slug, initialComments }: CommentSectionProps) {
-  const [comments, setComments] = useState<ArticleComment[]>(initialComments);
+export default function CommentSection({ slug }: CommentSectionProps) {
+  // Reset pending requests and comment state when navigating to another article.
+  return <ArticleComments key={slug} slug={slug} />;
+}
+
+function ArticleComments({ slug }: CommentSectionProps) {
+  const [comments, setComments] = useState<ArticleComment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [authorName, setAuthorName] = useState("");
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const postedComments = useRef<ArticleComment[]>([]);
+  const submissionController = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadComments() {
+      setIsLoading(true);
+      setLoadError(null);
+
+      try {
+        const response = await fetch(`/article-comments?slug=${encodeURIComponent(slug)}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        const data = await response.json();
+        if (!response.ok || !Array.isArray(data)) {
+          throw new Error("Unable to load comments.");
+        }
+        if (controller.signal.aborted) return;
+
+        // An older GET response must not erase a comment posted while it was loading.
+        const postedIds = new Set(postedComments.current.map((comment) => comment.id));
+        setComments([
+          ...postedComments.current,
+          ...(data as ArticleComment[]).filter((comment) => !postedIds.has(comment.id)),
+        ]);
+      } catch {
+        if (!controller.signal.aborted) setLoadError("Unable to load comments. Please try again.");
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    }
+
+    void loadComments();
+    return () => controller.abort();
+  }, [slug, loadAttempt]);
+
+  useEffect(() => () => submissionController.current?.abort(), []);
 
   const isDisabled = useMemo(() => {
     return isSubmitting || authorName.trim().length < 2 || content.trim().length < 2;
@@ -33,10 +79,13 @@ export default function CommentSection({ slug, initialComments }: CommentSection
 
     setIsSubmitting(true);
     setError(null);
+    const controller = new AbortController();
+    submissionController.current = controller;
 
     try {
-      const response = await fetch("/api/comments", {
+      const response = await fetch("/article-comments", {
         method: "POST",
+        signal: controller.signal,
         headers: {
           "Content-Type": "application/json",
         },
@@ -57,12 +106,16 @@ export default function CommentSection({ slug, initialComments }: CommentSection
       }
 
       const newComment = data as ArticleComment;
-      setComments((current) => [newComment, ...current]);
+      if (controller.signal.aborted) return;
+      postedComments.current = [newComment, ...postedComments.current];
+      setComments((current) => [newComment, ...current.filter((comment) => comment.id !== newComment.id)]);
       setContent("");
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Unable to post comment.");
+      if (!controller.signal.aborted) {
+        setError(submitError instanceof Error ? submitError.message : "Unable to post comment.");
+      }
     } finally {
-      setIsSubmitting(false);
+      if (!controller.signal.aborted) setIsSubmitting(false);
     }
   }
 
@@ -112,9 +165,21 @@ export default function CommentSection({ slug, initialComments }: CommentSection
         )}
       </form>
 
-      {comments.length === 0 ? (
+      {isLoading && (
+        <p className="text-sm text-muted-foreground" role="status">Loading comments...</p>
+      )}
+      {loadError && (
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-destructive" role="alert">{loadError}</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>
+            Retry
+          </Button>
+        </div>
+      )}
+      {comments.length === 0 && !isLoading && !loadError && (
         <p className="text-sm text-muted-foreground">No comments yet. Start the conversation.</p>
-      ) : (
+      )}
+      {comments.length > 0 && (
         <ul className="flex flex-col gap-3">
           {comments.map((comment) => (
             <li key={comment.id}>

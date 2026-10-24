@@ -1,9 +1,11 @@
 import { Github, Linkedin, type LucideIcon } from "lucide-react";
+import publicContent from "./public-content.json";
 
 export type SiteConfig = {
   brandName: string;
   domain: string;
   hostSite: string;
+  googleAnalyticsId: string;
   description: string;
   tagline: string;
   footerTagline: string;
@@ -19,7 +21,8 @@ export type SiteConfig = {
 export const siteConfig: SiteConfig = {
   brandName: "explainit",
   domain: "explainit.tech",
-  hostSite: "explainit.tech",
+  hostSite: publicContent.hostSite,
+  googleAnalyticsId: "G-4LND6SPQ4W",
   description:
     "explainit turns fast-moving technology shifts into clear, practical stories for real people.",
   tagline: "Technology made readable",

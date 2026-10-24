@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Source_Serif_4 } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 import Container from "@/components/common/Container";
 import AppFooter from "@/components/shell/AppFooter";
@@ -51,6 +52,9 @@ export default function RootLayout({
         <AppFooter />
         <MobileDock />
         </MotionProvider>
+        {process.env.NODE_ENV === "production" && (
+          <GoogleAnalytics gaId={siteConfig.googleAnalyticsId} />
+        )}
       </body>
     </html>
   );
