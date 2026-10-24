@@ -14,13 +14,19 @@ import TableOfContents from "@/components/articles/TableOfContents";
 import ArticleRail from "@/components/home/ArticleRail";
 import { Badge } from "@/components/ui/badge";
 import { siteConfig } from "@/config/site";
-import { getArticleBySlug, getCommentsForSlug, getPublishedArticles } from "@/lib/articles";
+import { getAllPublishedArticleSlugs, getArticleBySlug, getPublishedArticles } from "@/lib/articles";
 import { extractHeadings } from "@/lib/headings";
 import { articleUrl } from "@/lib/share";
 import { Article } from "@/types/article";
 
-const FETCH_LIMIT = 200;
 const RELATED_LIMIT = 6;
+
+export const revalidate = false;
+export const dynamicParams = false;
+
+export async function generateStaticParams() {
+  return (await getAllPublishedArticleSlugs()).map((slug) => ({ slug }));
+}
 
 type ArticlePageProps = {
   params: Promise<{ slug: string }>;
@@ -80,13 +86,11 @@ function structuredData(article: Article, slug: string) {
 
 export default async function ArticleDetailPage({ params }: ArticlePageProps) {
   const { slug } = await params;
-  const article = await getArticleBySlug(slug);
-  if (!article) notFound();
-
-  const [comments, { articles }] = await Promise.all([
-    getCommentsForSlug(slug),
-    getPublishedArticles(FETCH_LIMIT),
+  const [article, { articles }] = await Promise.all([
+    getArticleBySlug(slug),
+    getPublishedArticles(),
   ]);
+  if (!article) notFound();
 
   // The list is newest first: the previous index is newer, the next is older.
   const position = articles.findIndex((item) => item.slug === slug);
@@ -143,7 +147,7 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
 
             <AuthorBox />
             <ArticleNav newer={newer} older={older} />
-            <CommentSection key={slug} slug={slug} initialComments={comments} />
+            <CommentSection key={slug} slug={slug} />
           </div>
 
           <aside className="hidden lg:block" aria-label="Table of contents">

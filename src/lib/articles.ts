@@ -1,13 +1,19 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { siteConfig } from "@/config/site";
+import publishedArticles from "@/generated/published-articles.json";
 import { Article, ArticleComment } from "@/types/article";
 
-import { ApiError, fetchPublicApi } from "@/lib/public-api";
+import { fetchPublicApi } from "@/lib/public-api";
 
 export type PublishedArticleResult = {
   articles: Article[];
 };
+
+// The backend currently caps this unpaginated endpoint at 500 records.
+const PUBLIC_ARTICLES_LIMIT = 500;
 
 function normalizeHost(value?: string | null): string {
   const host = (value || "").trim().toLowerCase();
@@ -47,32 +53,56 @@ function sortNewestFirst(articles: Article[]): Article[] {
   });
 }
 
-export async function getPublishedArticles(limit = 120): Promise<PublishedArticleResult> {
+const loadPublishedArticles = cache(async (): Promise<Article[]> => {
   const hostSite = normalizeHost(siteConfig.hostSite);
 
-  const endpoint = "/public/articles?host_site=" + encodeURIComponent(hostSite) + "&limit=" + limit;
-  const response = await fetchPublicApi<Article[]>(endpoint, { cache: "no-store" });
+  // Development stays live. Production pages, filters and navigation all use
+  // the same bundled snapshot, so no link can point at an unbuilt article.
+  const endpoint = "/public/articles?host_site=" + encodeURIComponent(hostSite) + "&limit=" + PUBLIC_ARTICLES_LIMIT;
+  const response = process.env.NODE_ENV === "development"
+    ? await fetchPublicApi<Article[]>(endpoint, { cache: "no-store" })
+    : publishedArticles as Article[];
   if (!Array.isArray(response)) {
     throw new Error("Invalid article list response.");
   }
+  if (response.length >= PUBLIC_ARTICLES_LIMIT) {
+    throw new Error("The public article API reached its 500-article limit. Add backend pagination before building so no published pages are omitted.");
+  }
+
+  const slugs = new Set<string>();
+  const articles = response.map((article) => {
+    if (!article || typeof article.slug !== "string" || !article.slug.trim() || slugs.has(article.slug)) {
+      throw new Error("The public article API returned an invalid or duplicate slug.");
+    }
+    slugs.add(article.slug);
+    return normalizeArticle(article);
+  }).filter((article) => article.host_site === hostSite && (!article.status || article.status === "published"));
+
+  return sortNewestFirst(articles);
+});
+
+export async function getPublishedArticles(limit?: number): Promise<PublishedArticleResult> {
+  const articles = await loadPublishedArticles();
+  const selected = limit === undefined ? articles : articles.slice(0, limit);
   return {
-    articles: sortNewestFirst(response.map(normalizeArticle)).filter(
-      (article) => normalizeHost(article.host_site) === hostSite
-    ),
+    articles: selected.map((article) => {
+      // Cards and carousels cross client boundaries; don't send full article
+      // bodies to the browser when only their summaries are displayed.
+      const summary = { ...article };
+      delete summary.content;
+      return summary;
+    }),
   };
 }
 
+export async function getAllPublishedArticleSlugs(): Promise<string[]> {
+  return (await loadPublishedArticles()).map((article) => article.slug);
+}
+
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
-  const hostSite = normalizeHost(siteConfig.hostSite);
-  try {
-    const endpoint = "/public/articles/" + encodeURIComponent(slug) + "?host_site=" + encodeURIComponent(hostSite);
-    const article = await fetchPublicApi<Article>(endpoint, { cache: "no-store" });
-    const normalized = normalizeArticle(article);
-    return normalized.host_site === hostSite ? normalized : null;
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) return null;
-    throw error;
-  }
+  // The published list already includes full content and metadata. Reuse that
+  // build snapshot instead of making another API request for every page.
+  return (await loadPublishedArticles()).find((article) => article.slug === slug) || null;
 }
 
 

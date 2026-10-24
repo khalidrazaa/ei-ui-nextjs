@@ -7,7 +7,7 @@ import { ArticleSidePanel, ArticleTopControls } from "@/components/articles/Arti
 import EmptyState from "@/components/common/EmptyState";
 import Pagination from "@/components/common/Pagination";
 import { Button } from "@/components/ui/button";
-import { ARTICLES_FETCH_LIMIT, ARTICLES_PAGE_SIZE } from "@/config/listing";
+import { ARTICLES_PAGE_SIZE } from "@/config/listing";
 import { siteConfig } from "@/config/site";
 import { getPublishedArticles } from "@/lib/articles";
 import { articlesHref, buildCategoryIndex, parseArticleQuery, queryArticles } from "@/lib/article-query";
@@ -31,7 +31,7 @@ export async function generateMetadata({ searchParams }: ArticlesPageProps): Pro
 
 export default async function ArticlesPage({ searchParams }: ArticlesPageProps) {
   const query = parseArticleQuery(await searchParams);
-  const { articles } = await getPublishedArticles(ARTICLES_FETCH_LIMIT);
+  const { articles } = await getPublishedArticles();
 
   const results = queryArticles(articles, query);
   const groups = buildCategoryIndex(articles);
