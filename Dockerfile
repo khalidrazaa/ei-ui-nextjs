@@ -7,7 +7,8 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --foreground-scripts --loglevel=verbose \
+    && echo "Dependency installation completed"
 COPY . .
 # Refresh article content when rebuilding without a source change.
 ARG CONTENT_BUILD_REVISION=local
