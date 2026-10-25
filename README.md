@@ -56,7 +56,7 @@ Use modern Docker with BuildKit enabled. Change `CONTENT_BUILD_REVISION` for eac
 
 ## Google Analytics
 
-The GA4 measurement ID `G-4LND6SPQ4W` lives in [`src/config/site.ts`](src/config/site.ts) as `googleAnalyticsId`. The root layout uses the existing `@next/third-parties` integration across all routes. Analytics loads only in production; `npm run dev` does not track visits.
+The GA4 measurement ID `G-RNF5N3S8K8` lives in [`src/config/site.ts`](src/config/site.ts) as `googleAnalyticsId`. The root layout uses the existing `@next/third-parties` integration across all routes. Analytics loads only in production; `npm run dev` does not track visits.
 
 Standard production and Docker builds include this public ID automatically, with no extra environment variables or build arguments. To change the property, update `googleAnalyticsId`, rebuild, and deploy.
 

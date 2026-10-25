@@ -22,7 +22,7 @@ export const siteConfig: SiteConfig = {
   brandName: "explainit",
   domain: "explainit.tech",
   hostSite: publicContent.hostSite,
-  googleAnalyticsId: "G-4LND6SPQ4W",
+  googleAnalyticsId: "G-RNF5N3S8K8",
   description:
     "explainit turns fast-moving technology shifts into clear, practical stories for real people.",
   tagline: "Technology made readable",
