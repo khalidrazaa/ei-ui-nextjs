@@ -51,7 +51,7 @@ function label(value: string | null | undefined, fallback: string): string {
 }
 
 export function articleCategory(article: Pick<Article, "category">): string {
-  return label(article.category, "Uncategorized");
+  return label(article.category, "");
 }
 
 export function articleSubcategory(article: Pick<Article, "subcategory">): string {
@@ -111,6 +111,8 @@ export function buildCategoryIndex(articles: Article[]): CategoryGroup[] {
 
   for (const article of articles) {
     const category = articleCategory(article);
+    if (!category) continue;
+
     const subcategory = articleSubcategory(article);
     const branches = grouped.get(category) || new Map<string, number>();
     branches.set(subcategory, (branches.get(subcategory) || 0) + 1);

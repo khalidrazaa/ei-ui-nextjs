@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ARTICLES_PAGE_SIZE } from "@/config/listing";
 import { siteConfig } from "@/config/site";
 import { getPublishedArticles } from "@/lib/articles";
-import { articlesHref, buildCategoryIndex, parseArticleQuery, queryArticles } from "@/lib/article-query";
+import { articleCategory, articlesHref, buildCategoryIndex, parseArticleQuery, queryArticles } from "@/lib/article-query";
 
 type ArticlesPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -35,6 +35,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
 
   const results = queryArticles(articles, query);
   const groups = buildCategoryIndex(articles);
+  const uncategorizedArticles = articles.filter((article) => !articleCategory(article));
   const filtered = Boolean(query.q || query.category);
 
   const first = results.total === 0 ? 0 : (results.page - 1) * ARTICLES_PAGE_SIZE + 1;
@@ -42,10 +43,10 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-10">
-      <ArticleSidePanel groups={groups} total={articles.length} query={query} />
+      <ArticleSidePanel groups={groups} uncategorizedArticles={uncategorizedArticles} total={articles.length} query={query} />
 
       <div className="flex min-w-0 flex-col gap-5">
-        <ArticleTopControls groups={groups} total={articles.length} query={query} />
+        <ArticleTopControls groups={groups} uncategorizedArticles={uncategorizedArticles} total={articles.length} query={query} />
 
         <ActiveFilters query={query} />
 

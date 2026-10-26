@@ -1,10 +1,13 @@
 import Link from "next/link";
 
 import { ArticleQuery, CategoryGroup, articlesHref } from "@/lib/article-query";
+import { articlePath } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { Article } from "@/types/article";
 
 type CategoryNavProps = {
   groups: CategoryGroup[];
+  uncategorizedArticles: Pick<Article, "slug" | "title">[];
   total: number;
   query: ArticleQuery;
 };
@@ -20,10 +23,10 @@ function Count({ value }: { value: number }) {
 const rowClass =
   "flex items-center rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-accent/60";
 
-/** Category list; the active category expands to show its subcategories. */
-export function CategoryList({ groups, total, query }: CategoryNavProps) {
+/** Categories with subcategories, plus direct links to uncategorized articles. */
+export function CategoryList({ groups, uncategorizedArticles, total, query }: CategoryNavProps) {
   return (
-    <nav aria-label="Categories" className="flex flex-col gap-0.5">
+    <nav aria-label="Browse articles" className="flex flex-col gap-0.5">
       <Link
         href={hrefFor(query, null)}
         aria-current={!query.category ? "page" : undefined}
@@ -78,6 +81,12 @@ export function CategoryList({ groups, total, query }: CategoryNavProps) {
           </div>
         );
       })}
+
+      {uncategorizedArticles.map((article) => (
+        <Link key={article.slug} href={articlePath(article)} className={cn(rowClass, "leading-snug")}>
+          {article.title}
+        </Link>
+      ))}
     </nav>
   );
 }
@@ -86,13 +95,13 @@ const chipClass =
   "shrink-0 rounded-full border border-border bg-card px-3 py-1 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent";
 const chipActiveClass = "border-primary bg-primary text-primary-foreground hover:bg-primary";
 
-/** Mobile: scrollable category chips, plus subcategory chips when one is active. */
-export function CategoryChips({ groups, query }: CategoryNavProps) {
+/** Mobile: scrollable categories and article titles, plus active subcategories. */
+export function CategoryChips({ groups, uncategorizedArticles, query }: CategoryNavProps) {
   const active = groups.find((group) => group.category === query.category);
 
   return (
     <div className="flex min-w-0 flex-col gap-2 lg:hidden">
-      <nav aria-label="Categories" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
+      <nav aria-label="Browse articles" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
         <Link href={hrefFor(query, null)} className={cn(chipClass, !query.category && chipActiveClass)}>
           All
         </Link>
@@ -103,6 +112,16 @@ export function CategoryChips({ groups, query }: CategoryNavProps) {
             className={cn(chipClass, query.category === group.category && chipActiveClass)}
           >
             {group.category}
+          </Link>
+        ))}
+        {uncategorizedArticles.map((article) => (
+          <Link
+            key={article.slug}
+            href={articlePath(article)}
+            title={article.title}
+            className={cn(chipClass, "max-w-72 truncate")}
+          >
+            {article.title}
           </Link>
         ))}
       </nav>
