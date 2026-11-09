@@ -3,15 +3,26 @@ import Link from "next/link";
 import BrandMark from "@/components/common/BrandMark";
 import { siteConfig } from "@/config/site";
 
-/** Monogram with the brand name stacked over the tagline. */
-export default function BrandLockup() {
+type BrandLockupProps = {
+  showDescription?: boolean;
+};
+
+/** Brand logo with an optional description for the footer. */
+export default function BrandLockup({
+  showDescription = false,
+}: BrandLockupProps) {
   return (
-    <Link href="/" className="flex items-center gap-2.5" aria-label={`${siteConfig.brandName} home`}>
-      <BrandMark className="size-8" />
-      <span className="flex flex-col leading-none">
-        <span className="text-base font-semibold tracking-tight">{siteConfig.brandName}</span>
-        <span className="mt-1 text-[0.7rem] text-muted-foreground">{siteConfig.tagline}</span>
-      </span>
+    <Link
+      href="/"
+      className="inline-flex max-w-full flex-col items-center gap-2"
+      aria-label={`${siteConfig.brandName} home`}
+    >
+      <BrandMark className={showDescription ? undefined : "size-8"} />
+      {showDescription && (
+        <span className="max-w-72 text-center text-xs leading-relaxed text-muted-foreground">
+          {siteConfig.footerTagline}
+        </span>
+      )}
     </Link>
   );
 }
