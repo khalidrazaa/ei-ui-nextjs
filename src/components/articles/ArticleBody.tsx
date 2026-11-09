@@ -1,6 +1,8 @@
 import React from "react";
 
+import ArticleImage from "@/components/articles/ArticleImage";
 import { createHeadingIds, plainText } from "@/lib/headings";
+import { collectMarkdownImageDefinitions, markdownTableCells, parseMarkdownImageAt, type MarkdownImage, type MarkdownImageDefinition } from "@/lib/markdownImages";
 
 /** Only http(s), site-relative and in-page links are allowed. */
 export function safeHref(value: string): string | undefined {
@@ -8,30 +10,52 @@ export function safeHref(value: string): string | undefined {
   return undefined;
 }
 
-const INLINE = /(!?\[[^\]]*\]\([^)]+\)|\*\*[^*]+\*\*|`[^`]+`|\*[^*\s][^*]*\*)/g;
-
-function renderInline(text: string): React.ReactNode[] {
-  return text
-    .split(INLINE)
-    .filter(Boolean)
-    .map((part, index) => {
-      const link = part.match(/^(!?)\[([^\]]*)\]\(([^)]+)\)$/);
-      if (link) {
-        const [, isImage, label, target] = link;
-        const href = safeHref(target.trim());
-        if (!href) return <span key={index}>{label}</span>;
-        const external = /^https?:/i.test(href);
-        return (
-          <a key={index} href={href} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
-            {label || (isImage ? "View image" : href)}
-          </a>
-        );
+function renderInline(text: string, definitions: ReadonlyMap<string, MarkdownImageDefinition>): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let plain = "";
+  const flush = () => {
+    if (plain) { nodes.push(<React.Fragment key={nodes.length}>{plain}</React.Fragment>); plain = ""; }
+  };
+  for (let index = 0; index < text.length;) {
+    if (text[index] === "\\" && /[!"#$%&'()*+,\-./:;<=>?@[\]\\^_`{|}~]/.test(text[index + 1] || "")) {
+      plain += text[index + 1]; index += 2; continue;
+    }
+    if (text[index] === "`") {
+      const run = text.slice(index).match(/^`+/)![0];
+      let end = text.indexOf(run, index + run.length);
+      while (end >= 0 && (text[end - 1] === "`" || text[end + run.length] === "`")) end = text.indexOf(run, end + run.length);
+      if (end >= 0) {
+        flush(); nodes.push(<code key={nodes.length}>{text.slice(index + run.length, end)}</code>);
+        index = end + run.length; continue;
       }
-      if (part.startsWith("**")) return <strong key={index}>{part.slice(2, -2)}</strong>;
-      if (part.startsWith("`")) return <code key={index}>{part.slice(1, -1)}</code>;
-      if (part.length > 2 && part.startsWith("*")) return <em key={index}>{part.slice(1, -1)}</em>;
-      return <React.Fragment key={index}>{part}</React.Fragment>;
-    });
+      plain += run; index += run.length; continue;
+    }
+    const image = parseMarkdownImageAt(text, index, definitions);
+    if (image) {
+      flush(); nodes.push(<ArticleImage key={nodes.length} src={image.destination} alt={image.alt} title={image.title} inline />);
+      index = image.end; continue;
+    }
+    const rest = text.slice(index);
+    const link = rest.match(/^\[([^\]]*)\]\(([^)]+)\)/);
+    if (link) {
+      flush();
+      const href = safeHref(link[2].trim());
+      nodes.push(href ? <a key={nodes.length} href={href} {...(/^https?:/i.test(href) ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{link[1] || href}</a> : <span key={nodes.length}>{link[1]}</span>);
+      index += link[0].length; continue;
+    }
+    const bold = rest.match(/^\*\*([^*]+)\*\*/);
+    const italic = rest.match(/^\*([^*\s][^*]*)\*/);
+    if (bold || italic) {
+      const match = (bold || italic)!;
+      flush();
+      const children = renderInline(match[1], definitions);
+      nodes.push(bold ? <strong key={nodes.length}>{children}</strong> : <em key={nodes.length}>{children}</em>);
+      index += match[0].length; continue;
+    }
+    plain += text[index]; index += 1;
+  }
+  flush();
+  return nodes;
 }
 
 type Edge = { from: string; to: string; label: string };
@@ -156,6 +180,7 @@ type Block =
   | { type: "h1" | "h2" | "h3" | "p" | "quote"; text: string }
   | { type: "ul" | "ol"; items: string[] }
   | { type: "code"; lang: string; code: string }
+  | { type: "image"; image: MarkdownImage }
   | { type: "table"; head: string[]; rows: string[][] }
   | { type: "hr" };
 
@@ -164,24 +189,23 @@ const ORDERED = /^\d+[.)]\s+/;
 const RULE = /^(-{3,}|\*{3,}|_{3,})$/;
 const TABLE_DIVIDER = /^\|?\s*:?-{3,}/;
 
-const tableCells = (row: string) =>
-  row
-    .trim()
-    .replace(/^\||\|$/g, "")
-    .split("|")
-    .map((cell) => cell.trim());
-
 function isTableStart(lines: string[], index: number): boolean {
   return lines[index].includes("|") && index + 1 < lines.length && TABLE_DIVIDER.test(lines[index + 1].trim());
 }
 
-function startsNewBlock(lines: string[], index: number): boolean {
+function standaloneImage(line: string, definitions: ReadonlyMap<string, MarkdownImageDefinition>): MarkdownImage | null {
+  const image = parseMarkdownImageAt(line, 0, definitions);
+  return image && image.end === line.length ? image : null;
+}
+
+function startsNewBlock(lines: string[], index: number, definitions: ReadonlyMap<string, MarkdownImageDefinition>): boolean {
   const line = lines[index].trim();
   return (
     !line ||
     line.startsWith("#") ||
     line.startsWith("> ") ||
-    line.startsWith("```") ||
+    /^(?:`{3,}|~{3,})/.test(line) ||
+    standaloneImage(line, definitions) !== null ||
     BULLET.test(line) ||
     ORDERED.test(line) ||
     RULE.test(line) ||
@@ -189,7 +213,7 @@ function startsNewBlock(lines: string[], index: number): boolean {
   );
 }
 
-function parseMarkdownBlocks(markdown: string): Block[] {
+function parseMarkdownBlocks(markdown: string, definitions: ReadonlyMap<string, MarkdownImageDefinition>): Block[] {
   const lines = markdown.replace(/\r\n/g, "\n").split("\n");
   const blocks: Block[] = [];
   let index = 0;
@@ -202,11 +226,23 @@ function parseMarkdownBlocks(markdown: string): Block[] {
       continue;
     }
 
-    if (current.startsWith("```")) {
-      const lang = current.slice(3).trim();
+    if (/^(?: {4}|\t)/.test(lines[index])) {
+      const code: string[] = [];
+      while (index < lines.length && /^(?: {4}|\t)/.test(lines[index])) {
+        code.push(lines[index].replace(/^(?: {4}|\t)/, ""));
+        index += 1;
+      }
+      blocks.push({ type: "code", lang: "", code: code.join("\n") });
+      continue;
+    }
+
+    const fence = current.match(/^(`{3,}|~{3,})(.*)$/);
+    if (fence) {
+      const lang = fence[2].trim();
       const code: string[] = [];
       index += 1;
-      while (index < lines.length && !lines[index].trim().startsWith("```")) {
+      const closing = new RegExp(`^${fence[1][0]}{${fence[1].length},}\\s*$`);
+      while (index < lines.length && !closing.test(lines[index].trim())) {
         code.push(lines[index]);
         index += 1;
       }
@@ -215,12 +251,19 @@ function parseMarkdownBlocks(markdown: string): Block[] {
       continue;
     }
 
+    const image = standaloneImage(current, definitions);
+    if (image) {
+      blocks.push({ type: "image", image });
+      index += 1;
+      continue;
+    }
+
     if (isTableStart(lines, index)) {
-      const head = tableCells(current);
+      const head = markdownTableCells(current);
       const rows: string[][] = [];
       index += 2;
       while (index < lines.length && lines[index].includes("|")) {
-        rows.push(tableCells(lines[index]));
+        rows.push(markdownTableCells(lines[index]));
         index += 1;
       }
       blocks.push({ type: "table", head, rows });
@@ -275,11 +318,11 @@ function parseMarkdownBlocks(markdown: string): Block[] {
 
     const paragraph: string[] = [current];
     index += 1;
-    while (index < lines.length && !startsNewBlock(lines, index)) {
+    while (index < lines.length && !startsNewBlock(lines, index, definitions)) {
       paragraph.push(lines[index].trim());
       index += 1;
     }
-    blocks.push({ type: "p", text: paragraph.join(" ") });
+    blocks.push({ type: "p", text: paragraph.join("\n") });
   }
 
   return blocks;
@@ -292,7 +335,9 @@ type ArticleBodyProps = {
 };
 
 export default function ArticleBody({ content, title }: ArticleBodyProps) {
-  const parsed = parseMarkdownBlocks(content);
+  const document = collectMarkdownImageDefinitions(content);
+  const parsed = parseMarkdownBlocks(document.content, document.definitions);
+  const inline = (text: string) => renderInline(text, document.definitions);
   const first = parsed[0];
   const nextId = createHeadingIds();
   const blocks =
@@ -305,26 +350,26 @@ export default function ArticleBody({ content, title }: ArticleBodyProps) {
       {blocks.map((block, index) => {
         switch (block.type) {
           case "h1":
-            return <h1 key={index}>{renderInline(block.text)}</h1>;
+            return <h1 key={index}>{inline(block.text)}</h1>;
           case "h2":
             return (
               <h2 key={index} id={nextId(plainText(block.text))}>
-                {renderInline(block.text)}
+                {inline(block.text)}
               </h2>
             );
           case "h3":
             return (
               <h3 key={index} id={nextId(plainText(block.text))}>
-                {renderInline(block.text)}
+                {inline(block.text)}
               </h3>
             );
           case "quote":
-            return <blockquote key={index}>{renderInline(block.text)}</blockquote>;
+            return <blockquote key={index}>{inline(block.text)}</blockquote>;
           case "ul":
             return (
               <ul key={index}>
                 {block.items.map((item, itemIndex) => (
-                  <li key={itemIndex}>{renderInline(item)}</li>
+                  <li key={itemIndex}>{inline(item)}</li>
                 ))}
               </ul>
             );
@@ -332,7 +377,7 @@ export default function ArticleBody({ content, title }: ArticleBodyProps) {
             return (
               <ol key={index}>
                 {block.items.map((item, itemIndex) => (
-                  <li key={itemIndex}>{renderInline(item)}</li>
+                  <li key={itemIndex}>{inline(item)}</li>
                 ))}
               </ol>
             );
@@ -344,6 +389,8 @@ export default function ArticleBody({ content, title }: ArticleBodyProps) {
                 <code>{block.code}</code>
               </pre>
             );
+          case "image":
+            return <ArticleImage key={index} src={block.image.destination} alt={block.image.alt} title={block.image.title} />;
           case "table":
             return (
               <div key={index} className="overflow-x-auto">
@@ -351,7 +398,7 @@ export default function ArticleBody({ content, title }: ArticleBodyProps) {
                   <thead>
                     <tr>
                       {block.head.map((cell, cellIndex) => (
-                        <th key={cellIndex}>{renderInline(cell)}</th>
+                        <th key={cellIndex}>{inline(cell)}</th>
                       ))}
                     </tr>
                   </thead>
@@ -359,7 +406,7 @@ export default function ArticleBody({ content, title }: ArticleBodyProps) {
                     {block.rows.map((row, rowIndex) => (
                       <tr key={rowIndex}>
                         {row.map((cell, cellIndex) => (
-                          <td key={cellIndex}>{renderInline(cell)}</td>
+                          <td key={cellIndex}>{inline(cell)}</td>
                         ))}
                       </tr>
                     ))}
@@ -370,7 +417,7 @@ export default function ArticleBody({ content, title }: ArticleBodyProps) {
           case "hr":
             return <hr key={index} />;
           default:
-            return <p key={index}>{renderInline(block.text)}</p>;
+            return <p key={index}>{inline(block.text)}</p>;
         }
       })}
     </div>
