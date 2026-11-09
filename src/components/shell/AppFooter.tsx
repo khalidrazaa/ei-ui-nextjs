@@ -1,7 +1,7 @@
 import { ArrowUp, Mail, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
-import BrandMark from "@/components/common/BrandMark";
+import BrandLockup from "@/components/common/BrandLockup";
 import Container from "@/components/common/Container";
 import { Button } from "@/components/ui/button";
 import { ctaNavItem, navItems } from "@/config/navigation";
@@ -65,12 +65,8 @@ export default function AppFooter() {
       </Container>
 
       <Container className="grid gap-8 py-8 md:grid-cols-[2fr_1fr_1fr]">
-        <div className="flex max-w-sm flex-col gap-3">
-          <Link href="/" className="flex items-center gap-2.5" aria-label={`${siteConfig.brandName} home`}>
-            <BrandMark className="size-8" />
-            <span className="text-base font-semibold tracking-tight">{siteConfig.brandName}</span>
-          </Link>
-          <p className="text-sm text-muted-foreground">{siteConfig.footerTagline}</p>
+        <div className="flex max-w-sm justify-center md:justify-start">
+          <BrandLockup showDescription />
         </div>
 
         <FooterColumn title="Explore">

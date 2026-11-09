@@ -23,7 +23,9 @@ function fixtures(count, revision) {
       id,
       slug: `article-${id}`,
       title: `Fixture article ${id} ${revision}`,
-      content: `## A generated article\n\nSnapshot ${revision} content for article ${id}.`,
+      content: `## A generated article\n\nSnapshot ${revision} content for article ${id}.` + (id === 1
+        ? `\n\n![Architecture](https://media.example.test/v1/media/articles/1/7c3bf83e-bd79-44b3-93b1-c28fd302c258.svg "System architecture")\n\n![Sequence](https://media.example.test/v1/media/articles/1/ef3d7d02-f186-4c02-b4e0-3969863ac343.png)`
+        : ""),
       excerpt: `Snapshot ${revision} excerpt for article ${id}.`,
       status: "published",
       host_site: "explainit.tech",
@@ -219,7 +221,11 @@ test("builds every article beyond 200, serves without database reads, and refres
     const firstBuildRequestCount = requests.length;
     running = await start(directory, env, children);
     await assertRendered(running.origin, "/articles/article-201", "Snapshot initial content for article 201.");
-    await assertRendered(running.origin, "/articles/article-1", "Snapshot initial content for article 1.");
+    const withDiagrams = await assertRendered(running.origin, "/articles/article-1", "Snapshot initial content for article 1.");
+    assert.match(withDiagrams, /<img[^>]+src="https:\/\/media\.example\.test\/v1\/media\/articles\/1\/7c3bf83e-bd79-44b3-93b1-c28fd302c258\.svg"[^>]+alt="Architecture"/);
+    assert.match(withDiagrams, /<img[^>]+src="https:\/\/media\.example\.test\/v1\/media\/articles\/1\/ef3d7d02-f186-4c02-b4e0-3969863ac343\.png"[^>]+alt="Sequence"/);
+    assert.match(withDiagrams, /<figcaption>System architecture<\/figcaption>/);
+    assert.doesNotMatch(withDiagrams, /<p>\s*<figure/);
     const home = await assertRendered(running.origin, "/", "Fixture article 201 initial");
     assert.ok(!home.includes("Snapshot initial content for article"), "Homepage client data must contain article summaries without full bodies");
     await assertRendered(running.origin, "/articles?category=Technology&q=Fixture", "Fixture article 201 initial");

@@ -58,7 +58,7 @@
 
   /* Layout */
   --container-max: 74rem;
-  --header-height: 3.5rem;
+  --header-height: 3rem;
   --dock-height: 3.75rem;
 }
 
@@ -250,6 +250,12 @@
   }
   .article-prose figure {
     @apply my-6;
+  }
+  .article-prose .article-image {
+    @apply inline-block h-auto max-w-full rounded-lg align-middle;
+  }
+  .article-prose figure .article-image {
+    @apply mx-auto block;
   }
   .article-prose figcaption {
     @apply mt-2 text-center font-sans text-sm text-muted-foreground;

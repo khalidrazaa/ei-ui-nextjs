@@ -36,6 +36,14 @@ The build and development loaders request `/v1/public/articles` in pages of 100 
 
 Comments load separately after the article appears and remain live. Their Next.js endpoint is `/article-comments` (`GET ?slug=...` to load, `POST` to submit); reverse proxies must route this path to Next.js. It deliberately lives outside `/api/`, which production proxies may route to the backend. Comment submissions and contact enquiries continue to use runtime database/API access.
 
+### Diagram images in articles
+
+Markdown images render in their saved position, including PNG and SVG diagrams uploaded through the admin article editor. A standalone `![Architecture](https://your-api.example/v1/media/articles/123/image.svg "System architecture")` renders a responsive figure with the optional title as its caption; readers can open the full-size image. Images within paragraphs, lists and tables stay inline. Reference images such as `![Architecture][diagram]` followed by `[diagram]: https://your-api.example/v1/media/articles/123/image.png` are also supported. Existing Mermaid flowcharts continue to render separately.
+
+Save durable absolute HTTP(S) media URLs in article Markdown. Root-relative image URLs are supported when the public site's reverse proxy serves that media path; unresolved local paths such as `images/diagram.png` must be mapped to uploaded files in admin before publishing. Media requests come from the reader's browser and must work without the server-only public app key. SVG uploads are displayed only as external images, never inserted as executable SVG/HTML. Inline `data:`, `blob:`, `javascript:` and protocol-relative sources are rejected.
+
+Uploaded files must remain in persistent backend media storage rather than this site's build directory. Publishing or changing Markdown still requires rebuilding and deploying the public site as described above. Uploading alone does not refresh its deployed snapshot. Preserve older image URLs while deployed article snapshots may still reference them; an image replacement should receive a new URL rather than changing cached bytes at an existing URL.
+
 ### Docker and GitHub Actions
 
 Set the repository Actions secrets `API_URL` and `PUBLIC_APP_KEY`. The API address must include `/v1` and be reachable from the GitHub runner and the Docker build container. `localhost` inside Docker refers to the build container, so use a reachable production/staging backend or an appropriate host address for local Docker builds.

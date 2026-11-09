@@ -17,7 +17,7 @@ export default function AppHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-card/90 shadow-sm backdrop-blur-xl before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-linear-to-r before:from-primary before:via-primary/60 before:to-warning before:content-['']">
-      <Container className="flex h-(--header-height) items-center justify-between gap-4">
+      <Container className="flex h-(--header-height) items-center justify-center gap-4 md:justify-between">
         <BrandLockup />
 
         <div className="hidden items-center gap-3 md:flex">
