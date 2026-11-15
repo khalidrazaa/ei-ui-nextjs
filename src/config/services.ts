@@ -10,9 +10,6 @@ export type Service = {
 
 export type Plan = {
   name: string;
-  price: string;
-  cadence: string;
-  setup?: string;
   summary: string;
   features: string[];
   featured?: boolean;
@@ -88,26 +85,17 @@ export const servicesContent = {
   plans: [
     {
       name: "Presence",
-      price: "₹3,000",
-      cadence: "/month",
-      setup: "₹10,000 one-time setup",
       summary: "For businesses that need a solid online front door.",
       features: ["Landing page or small site", "Hosting, domain and SSL", "Enquiry form with lead alerts", "Small monthly edits"],
     },
     {
       name: "Insights",
-      price: "₹10,000",
-      cadence: "/month",
-      setup: "Setup quoted after the call",
       summary: "Everything in Presence, plus dashboards you'll actually open.",
       features: ["Everything in Presence", "3 to 5 dashboards", "Power BI or Superset", "Monthly refresh and changes"],
       featured: true,
     },
     {
       name: "Automation",
-      price: "Custom",
-      cadence: "",
-      setup: "Quoted per project",
       summary: "Reporting that runs end to end without anyone pressing a button.",
       features: ["Everything in Insights", "Automated data pipelines", "Scheduled report emails", "Monitoring and support"],
     },

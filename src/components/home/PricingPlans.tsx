@@ -17,7 +17,7 @@ export default function PricingPlans() {
       <SectionHeading
         id="pricing-title"
         title="Monthly plans"
-        description="Start small and move up when you need more. Prices exclude GST."
+        description="Start small and move up when you need more."
       />
 
       <ul className="grid gap-4 md:grid-cols-3">
@@ -37,14 +37,6 @@ export default function PricingPlans() {
               <p className="mt-1 text-sm text-muted-foreground">{plan.summary}</p>
             </div>
 
-            <div>
-              <p className="flex items-baseline gap-1">
-                <span className="font-serif text-4xl font-semibold tracking-tight">{plan.price}</span>
-                {plan.cadence && <span className="text-sm text-muted-foreground">{plan.cadence}</span>}
-              </p>
-              {plan.setup && <p className="mt-1 text-xs text-muted-foreground">{plan.setup}</p>}
-            </div>
-
             <ul className="flex flex-col gap-2 text-sm">
               {plan.features.map((feature) => (
                 <li key={feature} className="flex items-center gap-2">
@@ -55,7 +47,7 @@ export default function PricingPlans() {
             </ul>
 
             <Button asChild variant={plan.featured ? "default" : "outline"} className="mt-auto">
-              <Link href={closing.cta.href}>{plan.price === "Custom" ? "Get a quote" : `Choose ${plan.name}`}</Link>
+              <Link href={closing.cta.href}>Get a quote</Link>
             </Button>
           </li>
         ))}
