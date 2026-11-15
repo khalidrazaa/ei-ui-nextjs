@@ -24,8 +24,8 @@ export const siteConfig: SiteConfig = {
   hostSite: publicContent.hostSite,
   googleAnalyticsId: "G-RNF5N3S8K8",
   description:
-    "explainit turns fast-moving technology shifts into clear, practical stories for real people.",
-  tagline: "Technology made readable",
+    "explainit builds, hosts and runs websites, Power BI and Superset dashboards, and automated reports for growing businesses.",
+  tagline: "Websites, dashboards and report automation",
   footerTagline: "Practical explanations for data, analytics and technology.",
   contactEmail: "core@explainit.tech",
   themeColor: "#e9eef8",

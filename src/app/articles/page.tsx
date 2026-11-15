@@ -4,13 +4,16 @@ import Link from "next/link";
 import ActiveFilters from "@/components/articles/ActiveFilters";
 import ArticleCard from "@/components/articles/ArticleCard";
 import { ArticleSidePanel, ArticleTopControls } from "@/components/articles/ArticleFilterPanel";
+import HeroCarousel from "@/components/articles/HeroCarousel";
 import EmptyState from "@/components/common/EmptyState";
 import Pagination from "@/components/common/Pagination";
 import { Button } from "@/components/ui/button";
-import { ARTICLES_PAGE_SIZE } from "@/config/listing";
+import { ARTICLES_PAGE_SIZE, DEFAULT_SORT } from "@/config/listing";
 import { siteConfig } from "@/config/site";
 import { getPublishedArticles } from "@/lib/articles";
 import { articleCategory, articlesHref, buildCategoryIndex, parseArticleQuery, queryArticles } from "@/lib/article-query";
+
+const FEATURED_SLIDES = 4;
 
 type ArticlesPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -41,7 +44,22 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
   const first = results.total === 0 ? 0 : (results.page - 1) * ARTICLES_PAGE_SIZE + 1;
   const last = first + results.items.length - (results.total === 0 ? 0 : 1);
 
+  // Featured stories only on the clean listing, so filtered or paged results stay at the top.
+  const featured =
+    !filtered && results.page === 1 && query.sort === DEFAULT_SORT
+      ? [...articles]
+          .sort((left, right) => Number(Boolean(right.is_featured)) - Number(Boolean(left.is_featured)))
+          .slice(0, FEATURED_SLIDES)
+      : [];
+
   return (
+    <>
+    {featured.length > 0 && (
+      <div className="mb-10">
+        <HeroCarousel articles={featured} />
+      </div>
+    )}
+
     <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-10">
       <ArticleSidePanel groups={groups} uncategorizedArticles={uncategorizedArticles} total={articles.length} query={query} />
 
@@ -84,5 +102,6 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
         />
       </div>
     </div>
+    </>
   );
 }
