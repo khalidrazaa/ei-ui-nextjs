@@ -1,4 +1,4 @@
-import { BookOpenText, House, Info, Mail, type LucideIcon } from "lucide-react";
+import { BookOpenText, BriefcaseBusiness, House, Info, Mail, type LucideIcon } from "lucide-react";
 
 export type NavItem = {
   href: string;
@@ -11,6 +11,7 @@ export type NavItem = {
 /** Single source of truth for header, footer and mobile dock navigation. */
 export const navItems: NavItem[] = [
   { href: "/", label: "Home", icon: House },
+  { href: "/#services", label: "Services", icon: BriefcaseBusiness },
   { href: "/articles", label: "Articles", icon: BookOpenText },
   { href: "/about", label: "About", icon: Info },
   { href: "/contact", label: "Contact", icon: Mail, cta: true },
